@@ -6,10 +6,10 @@ TARGET = hyperbolic_equation
 all: $(TARGET)
 
 build: hyperbolic_equation.h
-	mpic++ -O3 -std=c++11 -fopenmp -o hyperbolic_equation -c hyperbolic_equation.cpp
+	mpic++ -O3 -std=c++11 -fopenmp hyperbolic_equation.cpp -o hyperbolic_equation
 
 run:
-	mpirun -np 4 ./main 128 1 out.txt
+	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
 
 submit-polus-parallel:
 	for N in 128 256 512 ; do \
