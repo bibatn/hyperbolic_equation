@@ -6,7 +6,7 @@ TARGET = hyperbolic_equation
 all: $(TARGET)
 
 hyperbolic_equation:
-	mpic++ -O3 -Wall -o hyperbolic_equation -c hyperbolic_equation.cpp
+	mpic++ -O3 -Wall -std=c++11 -o hyperbolic_equation -c hyperbolic_equation.cpp
 
 build: hyperbolic_equation
 	mpic++ hyperbolic_equation -O3 -std=c++11 -fopenmp main.cpp -o main
