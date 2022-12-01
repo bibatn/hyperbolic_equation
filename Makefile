@@ -5,21 +5,18 @@ TARGET = hyperbolic_equation
 
 all: $(TARGET)
 
-hyperbolic_equation:
-	g++ -O3 -std=c++11 -fopenmp -o hyperbolic_equation -c hyperbolic_equation.cpp -I/opt/ibm/spectrum_mpi/include -L/opt/ibm/spectrum_mpi/lib -lmpiprofilesupport -lmpi_ibm
-
-build: hyperbolic_equation
-	g++ hyperbolic_equation -O3 -std=c++11 -fopenmp main.cpp -o main -I/opt/ibm/spectrum_mpi/include -L/opt/ibm/spectrum_mpi/lib -lmpiprofilesupport -lmpi_ibm
+build: hyperbolic_equation.h
+	mpic++ -O3 -std=c++11 -fopenmp -o hyperbolic_equation -c hyperbolic_equation.cpp
 
 run:
 	mpirun -np 4 ./main 128 1 out.txt
 
-submit-polus-parallel: build
+submit-polus-parallel:
 	for N in 128 256 512 ; do \
 		for p in 1 4 8 16 32 ; do \
 			for i in {1..5} ; do \
-				bsub -n $$p -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./main $$N 1 out\_$$p\_$$N\_1.txt ; \
-				bsub -n $$p -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./main $$N out\_$$p\_$$N\_pi.txt ; \
+				bsub -n $$p -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./hyperbolic_equation $$N 1 out\_$$p\_$$N\_1.txt ; \
+				bsub -n $$p -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./hyperbolic_equation $$N out\_$$p\_$$N\_pi.txt ; \
 			done \
 		done \
 	done
