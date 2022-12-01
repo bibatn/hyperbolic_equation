@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <mpi.h>
+#include <stdexcept>
 
 enum Axis {
     X, Y, Z
