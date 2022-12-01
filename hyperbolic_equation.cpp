@@ -1,9 +1,5 @@
 #include "hyperbolic_equation.h"
 
-Functions::Functions(Grid g): g(g)
-{
-        a = M_PI * sqrt(1.0 / (g.L_x * g.L_x) + 1.0 / (g.L_y * g.L_y) + 4.0 / (g.L_z * g.L_z));
-}
 
 double Functions::AnalyticalSolution(double x, double y, double z, double t) const
 {
