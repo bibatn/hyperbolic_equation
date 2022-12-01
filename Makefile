@@ -6,10 +6,10 @@ TARGET = hyperbolic_equation
 all: $(TARGET)
 
 hyperbolic_equation:
-	mpic++ -O3 -std=c++11 -fopenmp -o hyperbolic_equation -c hyperbolic_equation.cpp
+	g++ -O3 -std=c++11 -fopenmp -o hyperbolic_equation -c hyperbolic_equation.cpp
 
 build: hyperbolic_equation
-	mpic++ hyperbolic_equation -O3 -std=c++11 -fopenmp main.cpp -o main
+	g++ hyperbolic_equation -O3 -std=c++11 -fopenmp main.cpp -o main
 
 run:
 	mpirun -np 4 ./main 128 1 out.txt
