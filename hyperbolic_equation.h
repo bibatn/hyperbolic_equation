@@ -93,74 +93,6 @@ public:
 
 };
 
-class Saver {
-
-    Grid g; // grid with the main data related to the solving
-    Index ind;
-    Functions f;
-
-public:
-
-    explicit Saver(Grid g) : g(g), ind(g), f(g) {}
-
-    void SaveLayer(const double *layer, double t, const char *filename) const {
-        std::ofstream fout(filename);
-
-        fout << "{" << std::endl;
-        fout << "    \"Lx\": " << g.L_x << ", " << std::endl;
-        fout << "    \"Ly\": " << g.L_y << ", " << std::endl;
-        fout << "    \"Lz\": " << g.L_z << ", " << std::endl;
-        fout << "    \"N\": " << g.N << ", " << std::endl;
-        fout << "    \"t\": " << t << ", " << std::endl;
-        fout << "    \"u\": [" << std::endl;
-
-        bool wasPrinted = false;
-
-        for (int i = 0; i <= g.N; i++) {
-            for (int j = 0; j <= g.N; j++) {
-                for (int k = 0; k <= g.N; k++) {
-                    if (wasPrinted) {
-                        fout << ", " << std::endl;
-                    }
-                    else {
-                        wasPrinted = true;
-                    }
-
-                    fout << "    " << layer[ind(i, j, k)];
-                }
-            }
-        }
-
-        fout << std::endl;
-        fout << "    ]" << std::endl;
-        fout << "}" << std::endl;
-
-        fout.close();
-    }
-
-    void SaveAnalyticalValues(double t, const char *filename) const {
-        double *u_copy = new double[(g.N + 1) * (g.N + 1) * (g.N + 1)];
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i <= g.N; i++)
-            for (int j = 0; j <= g.N; j++)
-                for (int k = 0; k <= g.N; k++)
-                    u_copy[ind(i, j, k)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, k * g.h_z, t);
-
-        SaveLayer(u_copy, t, filename);
-    }
-
-    void SaveDifferenceValues(const double *u, double t, const char *filename) const {
-        double *u_copy = new double[(g.N + 1) * (g.N + 1) * (g.N + 1)];
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i <= g.N; i++)
-            for (int j = 0; j <= g.N; j++)
-                for (int k = 0; k <= g.N; k++)
-                    u_copy[ind(i, j, k)] = fabs(u[ind(i, j, k)] - f.AnalyticalSolution(i * g.h_x, j * g.h_y, k * g.h_z, t));
-
-        SaveLayer(u_copy, t, filename);
-    }
-};
-
 void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int size, Axis axis, std::vector<Block> &blocks) {
     // split the grid recursively into blocks
     if (size == 1) {
@@ -214,12 +146,11 @@ class Solver {
     Functions f; // the main functions for the task
     Grid g; // grid with the main data related to the solving
     Index ind; // for getting flattened indexes in the 3-d array
-    Saver saver; // for saving results
     double **u; // function in the equation for 3 steps in the algorithm
 
 public:
 
-    explicit Solver(Grid g) : g(g), f(g), ind(g), saver(g) {
+    explicit Solver(Grid g) : g(g), f(g), ind(g) {
         int layerSize = (g.N + 1) * (g.N + 1) * (g.N + 1);
         u = new double*[3];
         u[0] = new double[layerSize];
@@ -307,11 +238,6 @@ public:
         }
 
         double error = ComputeLayerError(steps % 3, steps * g.tau);
-        if (save) {
-            saver.SaveLayer(u[steps % 3], steps * g.tau, "numerical.json");
-            saver.SaveDifferenceValues(u[steps % 3], steps * g.tau, "difference.json");
-            saver.SaveAnalyticalValues(steps * g.tau, "analytical.json");
-        }
 
         return error;
     }
