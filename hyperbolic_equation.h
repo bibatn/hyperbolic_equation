@@ -57,6 +57,28 @@ struct Block
         z_size = z_max - z_min + 1;
         size = x_size * y_size * z_size;
     }
+
+    void expand_Block()
+    {
+        x_min = x_min - 1;
+        y_min = y_min - 1;
+        z_min = z_min - 1;
+        x_size = x_max - x_min + 1;
+        y_size = y_max - y_min + 1;
+        z_size = z_max - z_min + 1;
+        size = x_size * y_size * z_size;
+    }
+
+    void narrow_Block()
+    {
+        x_min = x_min + 1;
+        y_min = y_min + 1;
+        z_min = z_min + 1;
+        x_size = x_max - x_min + 1;
+        y_size = y_max - y_min + 1;
+        z_size = z_max - z_min + 1;
+        size = x_size * y_size * z_size;
+    }
 };
 
 class Functions
@@ -350,7 +372,9 @@ public:
                 continue;
 
             Block otherBlock = blocks[i];
-            if (block.x_min == otherBlock.x_max + 1 or otherBlock.x_min == block.x_max + 1) {
+            if (block.x_min == otherBlock.x_max + 1 or otherBlock.x_min == block.x_max + 1)
+            {
+
                 int xSend = block.x_min == otherBlock.x_max + 1 ? block.x_min : block.x_max;
                 int xRecv = otherBlock.x_min == block.x_max + 1 ? otherBlock.x_min : otherBlock.x_max;
                 int y_min, y_max, z_min, z_max;
@@ -367,7 +391,8 @@ public:
                 blocksToReceive.emplace_back(i, Block(xRecv, xRecv, y_min, y_max, z_min, z_max));
                 continue;
             }
-            if (block.y_min == otherBlock.y_max + 1 or otherBlock.y_min == block.y_max + 1) {
+            if (block.y_min == otherBlock.y_max + 1 or otherBlock.y_min == block.y_max + 1)
+            {
                 int ySend = block.y_min == otherBlock.y_max + 1 ? block.y_min : block.y_max;
                 int yRecv = otherBlock.y_min == block.y_max + 1 ? otherBlock.y_min : otherBlock.y_max;
                 int x_min, x_max, z_min, z_max;
@@ -383,7 +408,8 @@ public:
                 blocksToReceive.emplace_back(i, Block(x_min, x_max, yRecv, yRecv, z_min, z_max));
                 continue;
             }
-            if (block.z_min == otherBlock.z_max + 1 or otherBlock.z_min == block.z_max + 1) {
+            if (block.z_min == otherBlock.z_max + 1 or otherBlock.z_min == block.z_max + 1)
+            {
                 int zSend = block.z_min == otherBlock.z_max + 1 ? block.z_min : block.z_max;
                 int zRecv = otherBlock.z_min == block.z_max + 1 ? otherBlock.z_min : otherBlock.z_max;
                 int x_min, x_max, y_min, y_max;
@@ -402,17 +428,19 @@ public:
         }
     }
 
-    double Solve(int steps) {
+    double Solve(int steps)
+    {
         // split grid between processes
         std::vector<Block> blocks;
         split(0, g.N, 0, g.N, 0, g.N, proc_size, X, blocks);
         Block block = blocks[proc_rank];
+        block.expand_Block();
 
         // allocate space for u
         u.resize(3);
         for (int i = 0; i < 3; i++)
             u[i].resize(block.size);
-
+        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
 
