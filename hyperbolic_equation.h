@@ -154,14 +154,13 @@ void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int
 }
 
 class SolverMPI {
-
-    Functions f; // the main functions for the task
-    Grid g; // grid with the main data related to the solving
+    Functions f;
+    Grid g;
     Index ind; // for getting flattened indexes in the 3-d array
-    std::vector< std::vector<double> > u; // function in the equation for 3 steps in the algorithm
-    std::vector< std::pair<int, Block> > blocksToSend; // neighbours with proc_rank whom this process should send the data
-    std::vector< std::pair<int, Block> > blocksToReceive; // neighbours with proc_rank from whom this process should receive the data
-    int proc_rank, proc_size; // information connected with MPI processes
+    std::vector< std::vector<double> > u;
+    std::vector< std::pair<int, Block> > blocksToSend;
+    std::vector< std::pair<int, Block> > blocksToReceive;
+    int proc_rank, proc_size;
 
 public:
 
