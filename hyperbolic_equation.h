@@ -153,7 +153,8 @@ void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int
     }
 }
 
-class SolverMPI {
+class SolverMPI
+{
     Functions f;
     Grid g;
     Index ind; // for getting flattened indexes in the 3-d array
@@ -164,13 +165,15 @@ class SolverMPI {
 
 public:
 
-    explicit SolverMPI(Grid g) : g(g), f(g), ind(g) {
+    explicit SolverMPI(Grid g) : g(g), f(g), ind(g)
+    {
         proc_rank = 0; proc_size = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
     }
 
-    std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const {
+    std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
+    {
         std::vector<double> dataToSend(otherBlock.size);
 
 #pragma omp parallel for collapse(3)
@@ -180,9 +183,10 @@ public:
                     dataToSend[ind(i, j, k, otherBlock)] = u[uInd][ind(i, j, k, block)];
 
         return dataToSend;
-    } // из одного блока переписывается в другой блок
+    }
 
-    std::vector< std::vector<double> > Exchange(int uInd, const Block block) const {
+    std::vector< std::vector<double> > Exchange(int uInd, const Block block) const
+    {
         std::vector< std::vector<double> > dataToReceive(blocksToReceive.size());
         std::vector<MPI_Request> requests(2);
         std::vector<MPI_Status> statuses(2);
@@ -216,14 +220,16 @@ public:
         throw std::runtime_error("u value non found");
     }
 
-    double LaplaceOperator(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const {
+    double LaplaceOperator(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const
+    {
         double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
         double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
         double dz = (FindU(uInd,i, j, k - 1, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j, k + 1, b, recieved)) / (g.h_z * g.h_z);
         return dx + dy + dz;
     }
 
-    double ComputeLayerError(int uInd, double t, const Block b) const {
+    double ComputeLayerError(int uInd, double t, const Block b) const
+    {
         double errorLocal = 0;
         // maximum difference between values of u analytical and u computed
 #pragma omp parallel for collapse(3) reduction(max: errorLocal)
@@ -237,7 +243,8 @@ public:
         return error;
     }
 
-    void FillBoundaryValues(int uInd, double t, const Block b) {
+    void FillBoundaryValues(int uInd, double t, const Block b)
+    {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
 #pragma omp parallel for collapse(2)
@@ -282,7 +289,8 @@ public:
         }
     }
 
-    void InitValues(const Block b) {
+    void InitValues(const Block b)
+    {
         // boundary (i = 0,N or j = 0,N or k = 0,N)
         FillBoundaryValues(0, 0, b);
         FillBoundaryValues(1, g.tau, b);
@@ -308,7 +316,8 @@ public:
                     u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * LaplaceOperator(0, i, j, k, b, recieved);
     }
 
-    void GetNextU(int step, const Block b) {
+    void GetNextU(int step, const Block b)
+    {
         // compute the boundaries of the current block
         int x1 = std::max(b.x_min, 1); int x2 = std::min(b.x_max, g.N - 1);
         int y1 = std::max(b.y_min, 1); int y2 = std::min(b.y_max, g.N - 1);
@@ -326,14 +335,17 @@ public:
         FillBoundaryValues(step % 3, step * g.tau, b);
     }
 
-    bool IsInside(int xmin1, int xmax1, int ymin1, int ymax1, int xmin2, int xmax2, int ymin2, int ymax2) const {
+    bool IsInside(int xmin1, int xmax1, int ymin1, int ymax1, int xmin2, int xmax2, int ymin2, int ymax2) const
+    {
         return xmin2 <= xmin1 && xmax1 <= xmax2 && ymin2 <= ymin1 && ymax1 <= ymax2;
     }
 
-    void GetNeighbours(const std::vector<Block> &blocks) {
+    void GetNeighbours(const std::vector<Block> &blocks)
+    {
         Block block = blocks[proc_rank];
 
-        for (int i = 0; i < proc_size; i++) {
+        for (int i = 0; i < proc_size; i++)
+        {
             if (i == proc_rank)
                 continue;
 
@@ -411,7 +423,8 @@ public:
         InitValues(block);
 
         // calculate the next time layers for u
-        for (int step = 2; step <= steps; step++) {
+        for (int step = 2; step <= steps; step++)
+        {
             GetNextU(step, block);
         }
 
