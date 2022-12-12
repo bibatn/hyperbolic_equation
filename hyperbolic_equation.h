@@ -360,9 +360,8 @@ public:
                 } else if (IsInside(otherBlock.y_min, otherBlock.y_max, otherBlock.z_min, otherBlock.z_max,
                                     block.y_min, block.y_max, block.z_min, block.z_max)) {
                     y_min = otherBlock.y_min; y_max = otherBlock.y_max; z_min = otherBlock.z_min; z_max = otherBlock.z_max;
-                } else {
+                } else
                     continue;
-                }
                 // add block as a rectangle (it's a border between two processes)
                 blocksToSend.emplace_back(i, Block(xSend, xSend, y_min, y_max, z_min, z_max));
                 blocksToReceive.emplace_back(i, Block(xRecv, xRecv, y_min, y_max, z_min, z_max));
@@ -378,9 +377,8 @@ public:
                 } else if (IsInside(otherBlock.x_min, otherBlock.x_max, otherBlock.z_min, otherBlock.z_max,
                                     block.x_min, block.x_max, block.z_min, block.z_max)) {
                     x_min = otherBlock.x_min; x_max = otherBlock.x_max; z_min = otherBlock.z_min; z_max = otherBlock.z_max;
-                } else {
+                } else
                     continue;
-                }
                 blocksToSend.emplace_back(i, Block(x_min, x_max, ySend, ySend, z_min, z_max));
                 blocksToReceive.emplace_back(i, Block(x_min, x_max, yRecv, yRecv, z_min, z_max));
                 continue;
@@ -395,9 +393,8 @@ public:
                 } else if (IsInside(otherBlock.x_min, otherBlock.x_max, otherBlock.y_min, otherBlock.y_max,
                                     block.x_min, block.x_max, block.y_min, block.y_max)) {
                     x_min = otherBlock.x_min; x_max = otherBlock.x_max; y_min = otherBlock.y_min; y_max = otherBlock.y_max;
-                } else {
+                } else
                     continue;
-                }
                 blocksToSend.emplace_back(i, Block(x_min, x_max, y_min, y_max, zSend, zSend));
                 blocksToReceive.emplace_back(i, Block(x_min, x_max, y_min, y_max, zRecv, zRecv));
                 continue;
