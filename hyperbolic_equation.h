@@ -4,11 +4,12 @@
 #include <mpi.h>
 #include <stdexcept>
 
-enum Axis {
+enum Axis
+{
     X, Y, Z
 };
-struct Grid {
-
+struct Grid
+{
     double L_x, L_y, L_z; // spatial sizes
     double h_x, h_y, h_z; // spatial steps
     int N; // number of spatial points
@@ -17,7 +18,8 @@ struct Grid {
     double tau; // time step
     int K; // number of time points
 
-    Grid(double L_x, double L_y, double L_z, int N, double T, int K) {
+    Grid(double L_x, double L_y, double L_z, int N, double T, int K)
+    {
         this->L_x = L_x;
         this->L_y = L_y;
         this->L_z = L_z;
@@ -34,7 +36,8 @@ struct Grid {
     }
 };
 
-struct Block {
+struct Block
+{
     int x_min;
     int x_max;
     int y_min;
@@ -46,8 +49,9 @@ struct Block {
     int z_size;
     int size;
 
-    Block(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) : x_min(x_min), x_max(x_max),
-                                                                              y_min(y_min), y_max(y_max), z_min(z_min), z_max(z_max) {
+    Block(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) :
+    x_min(x_min), x_max(x_max), y_min(y_min), y_max(y_max), z_min(z_min), z_max(z_max)
+    {
         x_size = x_max - x_min + 1;
         y_size = y_max - y_min + 1;
         z_size = z_max - z_min + 1;
@@ -59,7 +63,6 @@ class Functions
 {
     double a; // a_t in the analytical solution
     Grid g; // grid with the main data related to the solving
-
 public:
     explicit Functions(Grid g): g(g)
     {
@@ -73,47 +76,53 @@ public:
 };
 
 
-class Index {
-
+class Index
+{
     Grid g;
-
 public:
-
     explicit Index(Grid g) : g(g) {}
 
-    inline int operator()(int i, int j, int k) const {
+    inline int operator()(int i, int j, int k) const
+    {
         // 3d-array of points is flattened, get the linear index
         return (i * (g.N + 1) + j) * (g.N + 1) + k;
     }
 
-    inline int operator()(int i, int j, int k, Block b) const {
+    inline int operator()(int i, int j, int k, Block b) const
+    {
         // get the linear index inside the array of the given grid block
         return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
     }
 
 };
 
-void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int size, Axis axis, std::vector<Block> &blocks) {
+void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int size, Axis axis, std::vector<Block> &blocks)
+{
     // split the grid recursively into blocks
-    if (size == 1) {
+    if (size == 1)
+    {
         blocks.emplace_back(x_min, x_max, y_min, y_max, z_min, z_max);
         return;
     }
 
-    if (size % 2 == 1) { // if size is odd we make it even
-        if (axis == X) {
+    if (size % 2 == 1)
+    { // if size is odd we make it even
+        if (axis == X)
+        {
             int x = x_min + (x_max - x_min) / size;
             blocks.emplace_back(x_min, x, y_min, y_max, z_min, z_max);
             x_min = x + 1;
             axis = Y;
         }
-        else if (axis == Y) {
+        else if (axis == Y)
+        {
             int y = y_min + (y_max - y_min) / size;
             blocks.emplace_back(x_min, x_max, y_min, y, z_min, z_max);
             y_min = y + 1;
             axis = Z;
         }
-        else { // axis == Z
+        else
+        {
             int z = z_min + (z_max - z_min) / size;
             blocks.emplace_back(x_min, x_max, y_min, y_max, z_min, z);
             z_min = z + 1;
@@ -124,126 +133,25 @@ void split(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max, int
     }
 
     // now the size is even
-    if (axis == X) {
+    if (axis == X)
+    {
         int x = (x_min + x_max) / 2;
         split(x_min, x, y_min, y_max, z_min, z_max, size / 2, Y, blocks);
         split(x + 1, x_max, y_min, y_max, z_min, z_max, size / 2, Y, blocks);
     }
-    else if (axis == Y) {
+    else if (axis == Y)
+    {
         int y = (y_min + y_max) / 2;
         split(x_min, x_max, y_min, y, z_min, z_max, size / 2, Z, blocks);
         split(x_min, x_max, y + 1, y_max, z_min, z_max, size / 2, Z, blocks);
     }
-    else {
+    else
+    {
         int z = (z_min + z_max) / 2;
         split(x_min, x_max, y_min, y_max, z_min, z, size / 2, X, blocks);
         split(x_min, x_max, y_min, y_max, z + 1, z_max, size / 2, X, blocks);
     }
 }
-
-class Solver {
-
-    Functions f; // the main functions for the task
-    Grid g; // grid with the main data related to the solving
-    Index ind; // for getting flattened indexes in the 3-d array
-    double **u; // function in the equation for 3 steps in the algorithm
-
-public:
-
-    explicit Solver(Grid g) : g(g), f(g), ind(g) {
-        int layerSize = (g.N + 1) * (g.N + 1) * (g.N + 1);
-        u = new double*[3];
-        u[0] = new double[layerSize];
-        u[1] = new double[layerSize];
-        u[2] = new double[layerSize];
-    }
-
-    ~Solver() {
-        delete[] u[0];
-        delete[] u[1];
-        delete[] u[2];
-        delete[] u;
-    }
-
-    double LaplaceOperator(const double *func, int i, int j, int k) const {
-        return (func[ind(i - 1, j, k)] - 2 * func[ind(i, j, k)] + func[ind(i + 1, j, k)]) / (g.h_x * g.h_x) +
-               (func[ind(i, j - 1, k)] - 2 * func[ind(i, j, k)] + func[ind(i, j + 1, k)]) / (g.h_y * g.h_y) +
-               (func[ind(i, j, k - 1)] - 2 * func[ind(i, j, k)] + func[ind(i, j, k + 1)]) / (g.h_z * g.h_z);
-    }
-
-    void FillBoundaryValues(int uInd, double t) {
-        // Variant 3 -> first kind for x, periodic for y, first kind for z
-#pragma omp parallel for collapse(2)
-        for (int i = 0; i <= g.N; i++) {
-            for (int j = 0; j <= g.N; j++) {
-                // for x
-                u[uInd][ind(0, i, j)] = 0;
-                u[uInd][ind(g.N, i, j)] = 0;
-                // for y
-                u[uInd][ind(i, 0, j)] = f.AnalyticalSolution(i * g.h_x, 0, j * g.h_z, t);
-                u[uInd][ind(i, g.N, j)] = f.AnalyticalSolution(i * g.h_x, g.L_y, j * g.h_z, t);
-                // for z
-                u[uInd][ind(i, j, 0)] = 0;
-                u[uInd][ind(i, j, g.N)] = 0;
-            }
-        }
-    }
-
-    void InitValues() {
-        // boundary (i = 0,N or j = 0,N or k = 0,N)
-        FillBoundaryValues(0, 0);
-        FillBoundaryValues(1, g.tau);
-
-        // initial values for inner points in u_0
-#pragma omp parallel for collapse(3)
-        for (int i = 1; i < g.N; i++)
-            for (int j = 1; j < g.N; j++)
-                for (int k = 1; k < g.N; k++)
-                    u[0][ind(i, j, k)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
-        // initial values for inner points in u_1
-#pragma omp parallel for collapse(3)
-        for (int i = 1; i < g.N; i++)
-            for (int j = 1; j < g.N; j++)
-                for (int k = 1; k < g.N; k++)
-                    u[1][ind(i, j, k)] = u[0][ind(i, j, k)] + g.tau * g.tau / 2 * LaplaceOperator(u[0], i, j, k);
-    }
-
-    double ComputeLayerError(int uInd, double t) {
-        double error = 0;
-        // maximum difference between values of u analytical and u computed
-#pragma omp parallel for collapse(3) reduction(max: error)
-        for (int i = 0; i <= g.N; i++)
-            for (int j = 0; j <= g.N; j++)
-                for (int k = 0; k <= g.N; k++)
-                    error = std::max(error, fabs(u[uInd][ind(i, j, k)] -
-                                                 f.AnalyticalSolution(i * g.h_x, j * g.h_y, k * g.h_z, t)));
-        return error;
-    }
-
-    double Solve(int steps, bool save) {
-        // init u_0 and u_1
-        InitValues();
-
-        // calculate the next time layers for u
-        for (int step = 2; step <= steps; step++) {
-#pragma omp parallel for collapse(3)
-            for (int i = 1; i < g.N; i++)
-                for (int j = 1; j < g.N; j++)
-                    for (int k = 1; k < g.N; k++)
-                        // calculate u_n+1 inside the area
-                        u[step % 3][ind(i, j, k)] = 2 * u[(step + 2) % 3][ind(i, j, k)] - u[(step + 1) % 3][ind(i, j, k)] +
-                                                    g.tau * g.tau * LaplaceOperator(u[(step + 2) % 3], i, j, k);
-
-            FillBoundaryValues(step % 3, step * g.tau);
-        }
-
-        double error = ComputeLayerError(steps % 3, steps * g.tau);
-
-        return error;
-    }
-
-};
-
 
 class SolverMPI {
 
