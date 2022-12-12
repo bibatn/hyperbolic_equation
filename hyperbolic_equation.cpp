@@ -20,11 +20,10 @@ double Functions::Phi(double x, double y, double z) const
 
 int main(int argc, char** argv) {
     // MPI initialization
-    int proc_rank, proc_size;
-    int master_rank = 0;
+    int mp, np;
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mp);
+    MPI_Comm_size(MPI_COMM_WORLD, &np);
 
     int timeSteps = 20;
     int K = 1000;
@@ -47,11 +46,11 @@ int main(int argc, char** argv) {
     double end_time = MPI_Wtime();
     double delta = end_time - start_time;
     double max_time;
-    MPI_Reduce(&delta, &max_time, 1, MPI_DOUBLE, MPI_MAX, master_rank, MPI_COMM_WORLD);
+    MPI_Reduce(&delta, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    if (proc_rank == master_rank) {
+    if (mp == 0) {
         std::ofstream fout(filename, std::ios_base::app);
-        fout << N << " " << proc_size << " " << error << " " << max_time << std::endl;
+        fout << N << " " << np << " " << error << " " << max_time << std::endl;
         fout.close();
     }
     MPI_Finalize();
