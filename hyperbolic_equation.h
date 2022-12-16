@@ -434,7 +434,7 @@ public:
         std::vector<Block> blocks;
         split(0, g.N, 0, g.N, 0, g.N, proc_size, X, blocks);
         Block block = blocks[proc_rank];
-        block.expand_Block();
+//        block.expand_Block();
 
         // allocate space for u
         u.resize(3);
