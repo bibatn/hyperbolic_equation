@@ -440,7 +440,7 @@ public:
         u.resize(3);
         for (int i = 0; i < 3; i++)
             u[i].resize(block.size);
-        block.narrow_Block();
+//        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
 
