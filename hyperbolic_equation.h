@@ -194,7 +194,7 @@ public:
     {
         std::vector<double> dataToSend(otherBlock.size);
 
-#pragma omp parallel for collapse(3)
+#pragma acc kernels
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
@@ -250,7 +250,7 @@ public:
     {
         double errorLocal = 0;
         // maximum difference between values of u analytical and u computed
-#pragma omp parallel for collapse(3) reduction(max: errorLocal)
+#pragma acc kernels
         for (int i = b.x_min; i <= b.x_max; i++)
             for (int j = b.y_min; j <= b.y_max; j++)
                 for (int k = b.z_min; k <= b.z_max; k++)
@@ -265,42 +265,42 @@ public:
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
                     u[uInd][ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(i, b.y_max, j, b)] = 0;
         }
 
         if (b.z_min == 0) {
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-#pragma omp parallel for collapse(2)
+#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -319,7 +319,7 @@ public:
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
         // initial values for inner points in u_0
-#pragma omp parallel for collapse(3)
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -327,7 +327,7 @@ public:
 
         std::vector< std::vector<double> > recieved = Exchange(0, b);
         // initial values for inner points in u_1
-#pragma omp parallel for collapse(3)
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -343,7 +343,7 @@ public:
 
         std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
-#pragma omp parallel for collapse(3)
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
