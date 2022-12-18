@@ -233,7 +233,7 @@ public:
         throw std::runtime_error("u value non found");
     }
 
-    double LaplaceOperator(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const
+    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const
     {
         double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
         double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
@@ -326,7 +326,7 @@ public:
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * LaplaceOperator(0, i, j, k, b, recieved);
+                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b, recieved);
     }
 
     void GetNextU(int step, const Block b)
@@ -344,7 +344,7 @@ public:
                 for (int k = z1; k <= z2; k++)
                     u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
                                                    u[(step + 1) % 3][ind(i, j, k, b)] +
-                                                   g.tau * g.tau * LaplaceOperator((step + 2) % 3, i, j, k, b, received);
+                                                   g.tau * g.tau * Laplace((step + 2) % 3, i, j, k, b, received);
         FillBoundaryValues(step % 3, step * g.tau, b);
     }
 
