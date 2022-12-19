@@ -188,7 +188,7 @@ public:
     std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
-#pragma acc data copy(dataToSend, u)
+//#pragma acc data copy(dataToSend, u)
 #pragma acc kernels
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
