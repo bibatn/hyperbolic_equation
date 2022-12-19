@@ -344,7 +344,7 @@ public:
                 for (int k = z1; k <= z2; k++)
                     u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
                                                    u[(step + 1) % 3][ind(i, j, k, b)] +
-                                                   g.tau * g.tau;
+                                                   g.tau * g.tau * Laplace((step + 2) % 3, i, j, k, b, received);
 
         FillBoundaryValues(step % 3, step * g.tau, b);
     }
