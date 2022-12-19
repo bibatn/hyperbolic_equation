@@ -338,14 +338,14 @@ public:
 
         std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
-//#pragma acc kernels
-        for (int i = x1; i <= x2; i++)
 #pragma acc kernels
+        for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
                     u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
                                                    u[(step + 1) % 3][ind(i, j, k, b)] +
-                                                   g.tau * g.tau * Laplace((step + 2) % 3, i, j, k, b, received);
+                                                   g.tau * g.tau;
+
         FillBoundaryValues(step % 3, step * g.tau, b);
     }
 
