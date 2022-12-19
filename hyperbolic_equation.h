@@ -288,14 +288,14 @@ public:
         }
 
         if (b.z_min == 0) {
-//#pragma acc kernels
+#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-//#pragma acc kernels
+#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -338,7 +338,7 @@ public:
 
         std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
-#pragma acc kernels
+//#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
