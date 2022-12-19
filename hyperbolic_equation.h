@@ -241,16 +241,16 @@ public:
         return dx + dy + dz;
     }
 
-    double laplaceOperator(double *u, int i, int j, int k, const Block b, const Grid g, double *recieved,
-                                      Block *receive, int vsize) {
-        double dx = (findU(u, i, j - 1, k, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
-                     findU(u, i, j + 1, k, b, recieved, receive, vsize)) / (g.h_y * g.h_y);
-        double dy = (findU(u, i - 1, j, k, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
-                     findU(u, i + 1, j, k, b, recieved, receive, vsize)) / (g.h_x * g.h_x);
-        double dz = (findU(u, i, j, k - 1, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
-                     findU(u, i, j, k + 1, b, recieved, receive, vsize)) / (g.h_z * g.h_z);
-        return dx + dy + dz;
-    }
+//    double laplaceOperator(double *u, int i, int j, int k, const Block b, const Grid g, double *recieved,
+//                                      Block *receive, int vsize) {
+//        double dx = (findU(u, i, j - 1, k, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
+//                     findU(u, i, j + 1, k, b, recieved, receive, vsize)) / (g.h_y * g.h_y);
+//        double dy = (findU(u, i - 1, j, k, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
+//                     findU(u, i + 1, j, k, b, recieved, receive, vsize)) / (g.h_x * g.h_x);
+//        double dz = (findU(u, i, j, k - 1, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
+//                     findU(u, i, j, k + 1, b, recieved, receive, vsize)) / (g.h_z * g.h_z);
+//        return dx + dy + dz;
+//    }
 
     double ComputeLayerError(int uInd, double t, const Block b) const
     {
