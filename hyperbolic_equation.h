@@ -233,7 +233,7 @@ public:
         throw std::runtime_error("u value non found");
     }
 
-    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > recieved) const
+    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > & recieved) const
     {
         double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
         double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
@@ -241,7 +241,7 @@ public:
         return dx + dy + dz;
     }
 
-//    double laplaceOperator(double *u, int i, int j, int k, const Block b, const Grid g, double *recieved,
+//    double Laplace(double *u, int i, int j, int k, const Block b, const Grid g, double *recieved,
 //                                      Block *receive, int vsize) {
 //        double dx = (findU(u, i, j - 1, k, b, recieved, receive, vsize) - 2 * u[ind(i, j, k, b)] +
 //                     findU(u, i, j + 1, k, b, recieved, receive, vsize)) / (g.h_y * g.h_y);
@@ -349,7 +349,7 @@ public:
 
         std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
-#pragma acc data copy(received, u)
+#pragma acc enter data copyin(received)
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
