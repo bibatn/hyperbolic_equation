@@ -233,7 +233,7 @@ public:
         throw std::runtime_error("u value non found");
     }
 
-    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const
+    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > recieved) const
     {
         double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
         double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
