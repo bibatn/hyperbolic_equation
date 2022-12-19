@@ -245,7 +245,7 @@ public:
     {
         double errorLocal = 0;
         // maximum difference between values of u analytical and u computed
-#pragma acc kernels
+//#pragma acc kernels
         for (int i = b.x_min; i <= b.x_max; i++)
             for (int j = b.y_min; j <= b.y_max; j++)
                 for (int k = b.z_min; k <= b.z_max; k++)
