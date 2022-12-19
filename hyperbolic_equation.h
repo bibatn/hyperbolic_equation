@@ -260,28 +260,28 @@ public:
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
-#pragma acc kernels
+//#pragma acc kernels
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
-#pragma acc kernels
+//#pragma acc kernels
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
-#pragma acc kernels
+//#pragma acc kernels
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
                     u[uInd][ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
-#pragma acc kernels
+//#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u[uInd][ind(i, b.y_max, j, b)] = 0;
