@@ -314,7 +314,7 @@ public:
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
         // initial values for inner points in u_0
-#pragma acc kernels
+//#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -322,7 +322,7 @@ public:
 
         std::vector< std::vector<double> > recieved = Exchange(0, b);
         // initial values for inner points in u_1
-#pragma acc kernels
+//#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
