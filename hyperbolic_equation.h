@@ -338,7 +338,7 @@ public:
 
         std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
-//#pragma acc kernels
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
