@@ -1,12 +1,15 @@
 CXX=g++
-CXXFLAGS= -O3 -Wall
-
+CXXFLAGS = -O3 -Wall
+OPT = -acc -ta=nvidia, -Minfo=accel
 TARGET = hyperbolic_equation
 
 all: $(TARGET)
 
 build: hyperbolic_equation.h
 	mpic++ -O3 -std=c++11 -fopenmp hyperbolic_equation.cpp -o hyperbolic_equation
+
+build_pgc++: hyperbolic_equation.h
+	pgc++ $(CC) hyperbolic_equation.cpp -o hyperbolic_equation
 
 run:
 	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
