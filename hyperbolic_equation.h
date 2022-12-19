@@ -340,6 +340,7 @@ public:
         // calculate u_n+1 inside the area
 //#pragma acc kernels
         for (int i = x1; i <= x2; i++)
+#pragma acc kernels
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
                     u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
