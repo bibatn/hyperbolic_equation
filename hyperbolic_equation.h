@@ -4,6 +4,16 @@
 #include <mpi.h>
 #include <stdexcept>
 
+
+double AnalyticalSolution(double x, double y, double z, double t)
+{
+    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
+}
+double Phi(double x, double y, double z)
+{
+    return AnalyticalSolution(x, y, z, 0);
+}
+
 struct Block
 {
     Block(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) :
