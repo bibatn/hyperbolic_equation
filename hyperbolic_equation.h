@@ -342,7 +342,7 @@ public:
 //#pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
 //#pragma acc enter data create(offset_vector.data()[offset_vector.size()])
 
-#pragma acc update device(dataToReceive.data()[dataToReceive.size()])
+//#pragma acc update device(dataToReceive.data()[dataToReceive.size()])
 //#pragma acc update device(blocksToReceive.data()[blocksToReceive.size()])
 //#pragma acc update device(offset_vector.data()[offset_vector.size()])
 //#pragma acc kernels
