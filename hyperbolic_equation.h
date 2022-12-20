@@ -457,6 +457,8 @@ public:
             data_size = data_size + blocksToReceive[i].second.size;
         }
         dataToReceive.resize(data_size);
+#pragma acc enter data copyin(this)
+#pragma acc enter data create((&dataToReceive[0])[data_size])
         // init u_0 and u_1
         InitValues(block);
 
