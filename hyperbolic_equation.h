@@ -191,7 +191,7 @@ public:
     {
         std::vector<double> dataToSend(otherBlock.size);
 #pragma acc data copy(dataToSend, u, this)
-#pragma acc loop independent vector(16)
+#pragma acc kernels
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
@@ -294,16 +294,16 @@ public:
         }
 
         if (b.z_min == 0) {
-#pragma acc data copy(this)
-#pragma acc loop independent vector(16)
+//#pragma acc data copy(this)
+//#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-#pragma acc data copy(this)
-#pragma acc loop independent vector(16)
+//#pragma acc data copy(this)
+//#pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u[uInd][ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -349,8 +349,8 @@ public:
         Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
 //#pragma acc enter data copyin(received)
-#pragma acc data copy(u, dataToReceive, this)
-#pragma acc loop independent vector(16)
+//#pragma acc data copy(u, dataToReceive, this)
+//#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
