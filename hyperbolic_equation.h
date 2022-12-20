@@ -328,12 +328,24 @@ public:
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
                     u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+#pragma acc update host(u[0].data()[u[0].size()])
 
         Exchange(0, b);
 
 //        std::cout << "I'm here 2! " << std::endl;
         // initial values for inner points in u_1
-//#pragma acc kernels
+
+//#pragma acc enter data create(dataToReceive.data()[data_size])
+//#pragma acc enter data create(u[0].data()[u[0].size()])
+//#pragma acc enter data create(u[1].data()[u[1].size()])
+//#pragma acc enter data create(u[2].data()[u[2].size()])
+//#pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
+//#pragma acc enter data create(offset_vector.data()[offset_vector.size()])
+
+#pragma acc update device(dataToReceive.data()[data_size]))
+#pragma acc update device(blocksToReceive.data()[blocksToReceive.size()])
+#pragma acc update device(offset_vector.data()[offset_vector.size()])
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -463,6 +475,8 @@ public:
 #pragma acc enter data create(u[0].data()[u[0].size()])
 #pragma acc enter data create(u[1].data()[u[1].size()])
 #pragma acc enter data create(u[2].data()[u[2].size()])
+#pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
+#pragma acc enter data create(offset_vector.data()[offset_vector.size()])
 
         // init u_0 and u_1
         InitValues(block);
@@ -477,9 +491,12 @@ public:
 
         return ComputeLayerError(steps % 3, steps * g.tau, block);
 
+#pragma acc exit data delete(dataToReceive.data()[data_size])
 #pragma acc exit data delete(u[0].data()[u[0].size()])
 #pragma acc exit data delete(u[1].data()[u[1].size()])
 #pragma acc exit data delete(u[2].data()[u[2].size()])
+#pragma acc exit data delete(blocksToReceive.data()[blocksToReceive.size()])
+#pragma acc exit data delete(offset_vector.data()[offset_vector.size()])
     }
 
 };
