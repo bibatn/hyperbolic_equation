@@ -469,6 +469,7 @@ public:
         {
             GetNextU(step, block);
         }
+#pragma acc exit data delete(dataToReceive.data()[data_size])
 
         return ComputeLayerError(steps % 3, steps * g.tau, block);
     }
