@@ -323,7 +323,7 @@ public:
 
         // initial values for inner points in u_0
 #pragma acc update device(u[0].data()[u[0].size()])
-//#pragma acc kernels
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
