@@ -174,6 +174,8 @@ class SolverMPI
     std::vector< std::vector<double> > u;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
+    std::vector<int> offset_vector;
+    std::vector<double> dataToReceive;
     int proc_rank, proc_size;
 
 public:
@@ -198,24 +200,17 @@ public:
         return dataToSend;
     }
 
-    std::vector< std::vector<double> > Exchange(int uInd, const Block block) const
+    void Exchange(int uInd, const Block block)
     {
-        std::vector< std::vector<double> > dataToReceive(blocksToReceive.size());
-        std::vector<MPI_Request> requests(2);
-        std::vector<MPI_Status> statuses(2);
-
+//        std::vector<double> dataToReceive(blocksToReceive.size());
+//        std::cout << "I'm here! " << std::endl;
         for (int i = 0; i < blocksToReceive.size(); i++) {
             std::vector<double> dataToSend = GetSendData(uInd, block, blocksToSend[i].second);
-            dataToReceive[i] = std::vector<double>(blocksToReceive[i].second.size);
-            MPI_Sendrecv(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 777, dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 777, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
-//            MPI_Isend(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 0, MPI_COMM_WORLD, &requests[0]);
-//            MPI_Irecv(dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 0, MPI_COMM_WORLD, &requests[1]);
-//            MPI_Waitall(2, requests.data(), statuses.data());
+            MPI_Sendrecv(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 777, &dataToReceive[offset_vector[i]], blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 777, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
         }
-        return dataToReceive;
     }
 
-    double FindU(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const {
+    double FindU(int uInd, int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
             return u[uInd][ind(i, j, k, b)];
@@ -229,16 +224,16 @@ public:
                 k < otherB.z_min or k > otherB.z_max)
                 continue;
 
-            return recieved[r_i][ind(i, j, k, otherB)];
+            return dataToReceive[offset_vector[r_i] + ind(i, j, k, otherB)];
         }
         throw std::runtime_error("u value non found");
     }
 
-    double Laplace(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > & recieved) const
+    double Laplace(int uInd, int i, int j, int k, const Block b) const
     {
-        double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
-        double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
-        double dz = (FindU(uInd,i, j, k - 1, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j, k + 1, b, recieved)) / (g.h_z * g.h_z);
+        double dx = (FindU(uInd, i, j - 1, k, b) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b)) / (g.h_y * g.h_y);
+        double dy = (FindU(uInd, i - 1, j, k, b) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b)) / (g.h_x * g.h_x);
+        double dz = (FindU(uInd,i, j, k - 1, b) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j, k + 1, b)) / (g.h_z * g.h_z);
         return dx + dy + dz;
     }
 
@@ -332,13 +327,15 @@ public:
                 for (int k = z1; k <= z2; k++)
                     u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 
-        std::vector< std::vector<double> > recieved = Exchange(0, b);
+        Exchange(0, b);
+
+//        std::cout << "I'm here 2! " << std::endl;
         // initial values for inner points in u_1
 //#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b, recieved);
+                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b);
     }
 
     void GetNextU(int step, const Block b)
@@ -348,7 +345,7 @@ public:
         int y1 = std::max(b.y_min, 1); int y2 = std::min(b.y_max, g.N - 1);
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
-        std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
+        Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
 #pragma acc enter data copyin(received)
 #pragma acc kernels
@@ -357,7 +354,7 @@ public:
                 for (int k = z1; k <= z2; k++)
                     u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
                                                    u[(step + 1) % 3][ind(i, j, k, b)] +
-                                                   g.tau * g.tau * Laplace((step + 2) % 3, i, j, k, b, received);
+                                                   g.tau * g.tau * Laplace((step + 2) % 3, i, j, k, b);
 
         FillBoundaryValues(step % 3, step * g.tau, b);
     }
@@ -449,8 +446,19 @@ public:
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
 
+        offset_vector.resize(blocksToReceive.size());
+        offset_vector[0] = 0;
+        int data_size = blocksToReceive[0].second.size;
+        for (int i = 1; i < blocksToReceive.size(); i++)
+        {
+            offset_vector[i] = offset_vector[i-1] + blocksToReceive[i-1].second.size;
+            data_size = data_size + blocksToReceive[i].second.size;
+        }
+        dataToReceive.resize(data_size);
         // init u_0 and u_1
         InitValues(block);
+
+//        std::cout << "I'm here 1!" << std::endl;
 
         // calculate the next time layers for u
         for (int step = 2; step <= steps; step++)
