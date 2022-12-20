@@ -322,6 +322,7 @@ public:
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
         // initial values for inner points in u_0
+#pragma acc update device(u[0].data()[u[0].size()])
 //#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
@@ -459,9 +460,9 @@ public:
         dataToReceive.resize(data_size);
 #pragma acc enter data copyin(this)
 #pragma acc enter data create(dataToReceive.data()[data_size])
-#pragma acc enter data create(u[0].data()[data_size])
-#pragma acc enter data create(u[1].data()[data_size])
-#pragma acc enter data create(u[2].data()[data_size])
+#pragma acc enter data create(u[0].data()[u[0].size()])
+#pragma acc enter data create(u[1].data()[u[1].size()])
+#pragma acc enter data create(u[2].data()[u[2].size()])
 
         // init u_0 and u_1
         InitValues(block);
@@ -476,9 +477,9 @@ public:
 
         return ComputeLayerError(steps % 3, steps * g.tau, block);
 
-#pragma acc exit data delete(u[0].data()[data_size])
-#pragma acc exit data delete(u[1].data()[data_size])
-#pragma acc exit data delete(u[2].data()[data_size])
+#pragma acc exit data delete(u[0].data()[u[0].size()])
+#pragma acc exit data delete(u[1].data()[u[1].size()])
+#pragma acc exit data delete(u[2].data()[u[2].size()])
     }
 
 };
