@@ -471,7 +471,7 @@ public:
         }
         dataToReceive.resize(data_size);
 #pragma acc enter data copyin(this)
-#pragma acc enter data create(dataToReceive.data()[data_size])
+#pragma acc enter data create(dataToReceive.data()[dataToReceive.size()])
 #pragma acc enter data create(u[0].data()[u[0].size()])
 #pragma acc enter data create(u[1].data()[u[1].size()])
 #pragma acc enter data create(u[2].data()[u[2].size()])
