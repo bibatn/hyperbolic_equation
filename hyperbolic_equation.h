@@ -190,7 +190,7 @@ public:
     std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
-#pragma acc data copy(dataToSend, u)
+#pragma acc data copy(dataToSend, u, this)
 #pragma acc kernels
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
@@ -294,6 +294,7 @@ public:
         }
 
         if (b.z_min == 0) {
+#pragma acc data copy(this)
 #pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
@@ -301,6 +302,7 @@ public:
         }
 
         if (b.z_max == g.N) {
+#pragma acc data copy(this)
 #pragma acc kernels
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
@@ -347,7 +349,7 @@ public:
         Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
 //#pragma acc enter data copyin(received)
-#pragma acc data copy(u, dataToReceive)
+#pragma acc data copy(u, dataToReceive, this)
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
