@@ -207,9 +207,10 @@ public:
         for (int i = 0; i < blocksToReceive.size(); i++) {
             std::vector<double> dataToSend = GetSendData(uInd, block, blocksToSend[i].second);
             dataToReceive[i] = std::vector<double>(blocksToReceive[i].second.size);
-            MPI_Isend(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 0, MPI_COMM_WORLD, &requests[0]);
-            MPI_Irecv(dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 0, MPI_COMM_WORLD, &requests[1]);
-            MPI_Waitall(2, requests.data(), statuses.data());
+            MPI_Sendrecv(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 777, dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 777, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
+//            MPI_Isend(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 0, MPI_COMM_WORLD, &requests[0]);
+//            MPI_Irecv(dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 0, MPI_COMM_WORLD, &requests[1]);
+//            MPI_Waitall(2, requests.data(), statuses.data());
         }
         return dataToReceive;
     }
