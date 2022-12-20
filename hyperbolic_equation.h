@@ -328,7 +328,7 @@ public:
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
                     u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
-#pragma acc update host(u[0].data()[u[0].size()])
+//#pragma acc update host(u[0].data()[u[0].size()])
 
         Exchange(0, b);
 
