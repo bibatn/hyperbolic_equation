@@ -226,7 +226,6 @@ public:
 
             return dataToReceive[offset_vector[r_i] + ind(i, j, k, otherB)];
         }
-        throw std::runtime_error("u value non found");
     }
 
     double Laplace(int uInd, int i, int j, int k, const Block b) const
@@ -348,7 +347,7 @@ public:
         Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
 //#pragma acc enter data copyin(received)
-#pragma acc data copy(u)
+#pragma acc data copy(u, dataToReceive)
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
