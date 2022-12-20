@@ -348,7 +348,7 @@ public:
         Exchange((step + 2) % 3, b);
         // calculate u_n+1 inside the area
 //#pragma acc enter data copyin(received)
-#pragma acc data copy(received, u)
+#pragma acc data copy(u)
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
