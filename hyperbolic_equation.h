@@ -459,6 +459,10 @@ public:
         dataToReceive.resize(data_size);
 #pragma acc enter data copyin(this)
 #pragma acc enter data create(dataToReceive.data()[data_size])
+#pragma acc enter data create(u[0].data()[data_size])
+#pragma acc enter data create(u[1].data()[data_size])
+#pragma acc enter data create(u[2].data()[data_size])
+
         // init u_0 and u_1
         InitValues(block);
 
@@ -469,9 +473,12 @@ public:
         {
             GetNextU(step, block);
         }
-#pragma acc exit data delete(dataToReceive.data()[data_size])
 
         return ComputeLayerError(steps % 3, steps * g.tau, block);
+
+#pragma acc exit data delete(u[0].data()[data_size])
+#pragma acc exit data delete(u[1].data()[data_size])
+#pragma acc exit data delete(u[2].data()[data_size])
     }
 
 };
