@@ -53,6 +53,11 @@ struct Block
     int size;
 };
 
+int ind(int i, int j, int k, const Block b) {
+    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
+}
+
+
 struct Grid
 {
     Grid(double L_x, double L_y, double L_z, int N, double T, int K)
@@ -180,7 +185,7 @@ class SolverMPI
 {
     Functions f;
     Grid g;
-    Index ind; // for getting flattened indexes in the 3-d array
+//    Index ind; // for getting flattened indexes in the 3-d array
     std::vector< std::vector<double> > u;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
@@ -190,7 +195,7 @@ class SolverMPI
 
 public:
 
-    explicit SolverMPI(Grid g) : g(g), f(g), ind(g)
+    explicit SolverMPI(Grid g) : g(g), f(g)
     {
         proc_rank = 0; proc_size = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
@@ -236,6 +241,7 @@ public:
 
             return dataToReceive[offset_vector[r_i] + ind(i, j, k, otherB)];
         }
+        return 1;
     }
 
     double Laplace(int uInd, int i, int j, int k, const Block b) const
