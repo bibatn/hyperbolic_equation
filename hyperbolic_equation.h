@@ -4,10 +4,10 @@
 #include <mpi.h>
 #include <stdexcept>
 
-
+double a = M_PI * sqrt(1.0 / (1 * 1) + 1.0 / (1 * 1) + 4.0 / (1 * 1));
 double AnalyticalSolution(double x, double y, double z, double t)
 {
-    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
+    return sin(M_PI * x / 1) * sin(M_PI * y / 1) * sin(2 * M_PI * z / 1) * cos(a * t);
 }
 double Phi(double x, double y, double z)
 {
@@ -337,8 +337,8 @@ public:
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
-//#pragma acc update host(u[0].data()[u[0].size()])
+                    u[0][ind(i, j, k, b)] = Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+#pragma acc update host(u[0].data()[u[0].size()])
 
         Exchange(0, b);
 
