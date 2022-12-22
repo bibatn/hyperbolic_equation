@@ -11,7 +11,7 @@ double AnalyticalSolution(double x, double y, double z, double t)
 }
 double Phi(double x, double y, double z)
 {
-    return AnalyticalSolution(x, y, z, 0);
+    return sin(M_PI * x / 1) * sin(M_PI * y / 1) * sin(2 * M_PI * z / 1) * cos(a * 0.0);
 }
 
 struct Block
