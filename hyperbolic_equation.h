@@ -348,12 +348,16 @@ public:
         int x_size = b.x_size;
         int y_size = b.y_size;
         int z_size = b.z_size;
+
+        int h_x = g.h_x;
+        int h_y = g.h_y;
+        int h_z = g.h_z;
 #pragma acc update device(u[0].data()[u[0].size()])
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+                    u[0][ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * h_x, j * h_y, k * h_z);
 #pragma acc update host(u[0].data()[u[0].size()])
 
         Exchange(0, b);
