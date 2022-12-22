@@ -57,6 +57,10 @@ int ind(int i, int j, int k, const Block b) {
     return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
 }
 
+int ind(int i, int j, int k, int x_min, int y_min, int z_min, int y_size, int z_size) {
+    return (i - x_min) * y_size * z_size + (j - y_min) * z_size + (k - z_min);
+}
+
 
 struct Grid
 {
@@ -338,12 +342,18 @@ public:
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
         // initial values for inner points in u_0
+        int x_min = b.x_min;
+        int y_min = b.y_min;
+        int z_min = b.z_min;
+        int x_size = b.x_size;
+        int y_size = b.y_size;
+        int z_size = b.z_size;
 #pragma acc update device(u[0].data()[u[0].size()])
-//#pragma acc kernels
+#pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, b)] = Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+                    u[0][ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 #pragma acc update host(u[0].data()[u[0].size()])
 
         Exchange(0, b);
