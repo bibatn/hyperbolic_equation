@@ -367,7 +367,7 @@ public:
                     u0[ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * h_x, j * h_y, k * h_z);
 #pragma acc update host(u0[0:b.size])
 
-        Exchange(0, b);
+//        Exchange(0, b);
 
 //        std::cout << "I'm here 2! " << std::endl;
         // initial values for inner points in u_1
@@ -383,11 +383,11 @@ public:
 //#pragma acc update device(blocksToReceive.data()[blocksToReceive.size()])
 //#pragma acc update device(offset_vector.data()[offset_vector.size()])
 //#pragma acc kernels
-        for (int i = x1; i <= x2; i++)
-            for (int j = y1; j <= y2; j++)
-                for (int k = z1; k <= z2; k++)
-                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b);
-    }
+//        for (int i = x1; i <= x2; i++)
+//            for (int j = y1; j <= y2; j++)
+//                for (int k = z1; k <= z2; k++)
+//                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b);
+//    }
 
     void GetNextU(int step, const Block b)
     {
@@ -525,12 +525,12 @@ public:
 //        std::cout << "I'm here 1!" << std::endl;
 
         // calculate the next time layers for u
-        for (int step = 2; step <= steps; step++)
-        {
-            GetNextU(step, block);
-        }
+//        for (int step = 2; step <= steps; step++)
+//        {
+//            GetNextU(step, block);
+//        }
 
-        double layerError =  ComputeLayerError(steps % 3, steps * g.tau, block);
+//        double layerError =  ComputeLayerError(steps % 3, steps * g.tau, block);
 
         for (int i = 0; i < 3; i++)
             delete [] u[i];
@@ -541,7 +541,7 @@ public:
 //#pragma acc exit data delete(blocksToReceive.data()[blocksToReceive.size()])
 //#pragma acc exit data delete(offset_vector.data()[offset_vector.size()])
 
-        return layerError;
+        return 1;
     }
 
 };
