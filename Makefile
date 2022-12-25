@@ -14,6 +14,9 @@ build_pgc++: hyperbolic_equation.h
 build_: hyperbolic_equation.h
 	mpic++ -O3 -std=c++11 $(OPT) hyperbolic_equation.cpp -o hyperbolic_equation
 
+build_p: hyperbolic_equation.h
+	pgc++ -O3 -std=c++11 $(OPT) hyperbolic_equation.cpp -o hyperbolic_equation
+
 run:
 	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
 
