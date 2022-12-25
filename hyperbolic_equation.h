@@ -511,7 +511,7 @@ public:
 #pragma acc enter data create(dataToReceive.data()[0:dataToReceive.size()])
 #pragma acc enter data create(u[0][0:block.size])
 #pragma acc enter data create(u[1][0:block.size])
-#pragma acc enter data create(u[2][0.block.size])
+#pragma acc enter data create(u[2][0:block.size])
 #pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
 #pragma acc enter data create(offset_vector.data()[offset_vector.size()])
 
