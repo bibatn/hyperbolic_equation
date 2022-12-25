@@ -192,6 +192,7 @@ class SolverMPI
 //    Index ind; // for getting flattened indexes in the 3-d array
 //    std::vector< std::vector<double> > u;
     double ** u;
+    double * u0;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
     std::vector<int> offset_vector;
@@ -358,13 +359,13 @@ public:
         int h_x = g.h_x;
         int h_y = g.h_y;
         int h_z = g.h_z;
-#pragma acc update device(u[0][0:b.size])
+#pragma acc update device(u0[0:b.size])
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * h_x, j * h_y, k * h_z);
-#pragma acc update host(u[0][0:b.size])
+                    u0[ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * h_x, j * h_y, k * h_z);
+#pragma acc update host(u0[0:b.size])
 
         Exchange(0, b);
 
@@ -493,6 +494,7 @@ public:
 //        u.resize(3);
         for (int i = 0; i < 3; i++)
             u[i] = new double (block.size);
+        u0 = new double(block.size);
 //            u[i].resize(block.size);
 //        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
@@ -514,6 +516,8 @@ public:
 #pragma acc enter data create(u[2][0:block.size])
 #pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
 #pragma acc enter data create(offset_vector.data()[offset_vector.size()])
+
+#pragma acc enter data create(u0[0:block.size])
 
         // init u_0 and u_1
         InitValues(block);
