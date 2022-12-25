@@ -387,7 +387,7 @@ public:
 //            for (int j = y1; j <= y2; j++)
 //                for (int k = z1; k <= z2; k++)
 //                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * Laplace(0, i, j, k, b);
-//    }
+    }
 
     void GetNextU(int step, const Block b)
     {
