@@ -360,7 +360,7 @@ public:
         int h_y = g.h_y;
         int h_z = g.h_z;
 #pragma acc update device(u0[0:b.size])
-#pragma acc kernels
+#pragma acc kernels loop independent
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
