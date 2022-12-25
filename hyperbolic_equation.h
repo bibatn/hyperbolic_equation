@@ -190,7 +190,8 @@ class SolverMPI
     Functions f;
     Grid g;
 //    Index ind; // for getting flattened indexes in the 3-d array
-    std::vector< std::vector<double> > u;
+//    std::vector< std::vector<double> > u;
+    double ** u;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
     std::vector<int> offset_vector;
@@ -201,9 +202,14 @@ public:
 
     explicit SolverMPI(Grid g) : g(g), f(g)
     {
+        u = new double * [3];
         proc_rank = 0; proc_size = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
+    }
+    ~SolverMPI()
+    {
+        delete [] u;
     }
 
     std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
@@ -352,13 +358,13 @@ public:
         int h_x = g.h_x;
         int h_y = g.h_y;
         int h_z = g.h_z;
-#pragma acc update device(u[0].data()[u[0].size()])
+#pragma acc update device(u[0][0:b.size])
 #pragma acc kernels
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
                     u[0][ind(i, j, k, x_min, y_min, z_min, y_size, z_size)] = Phi(i * h_x, j * h_y, k * h_z);
-#pragma acc update host(u[0].data()[u[0].size()])
+#pragma acc update host(u[0][0:b.size])
 
         Exchange(0, b);
 
@@ -484,9 +490,10 @@ public:
 //        block.expand_Block();
 
         // allocate space for u
-        u.resize(3);
+//        u.resize(3);
         for (int i = 0; i < 3; i++)
-            u[i].resize(block.size);
+            u[i] = new double (block.size);
+//            u[i].resize(block.size);
 //        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
@@ -501,10 +508,10 @@ public:
         }
         dataToReceive.resize(data_size);
 #pragma acc enter data copyin(this)
-#pragma acc enter data create(dataToReceive.data()[dataToReceive.size()])
-#pragma acc enter data create(u[0].data()[u[0].size()])
-#pragma acc enter data create(u[1].data()[u[1].size()])
-#pragma acc enter data create(u[2].data()[u[2].size()])
+#pragma acc enter data create(dataToReceive.data()[0:dataToReceive.size()])
+#pragma acc enter data create(u[0][0:block.size])
+#pragma acc enter data create(u[1][0:block.size])
+#pragma acc enter data create(u[2][0.block.size])
 #pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
 #pragma acc enter data create(offset_vector.data()[offset_vector.size()])
 
@@ -519,14 +526,18 @@ public:
             GetNextU(step, block);
         }
 
-        return ComputeLayerError(steps % 3, steps * g.tau, block);
+        double layerError =  ComputeLayerError(steps % 3, steps * g.tau, block);
 
+        for (int i = 0; i < 3; i++)
+            delete [] u[i];
 #pragma acc exit data delete(dataToReceive.data()[data_size])
-#pragma acc exit data delete(u[0].data()[u[0].size()])
-#pragma acc exit data delete(u[1].data()[u[1].size()])
-#pragma acc exit data delete(u[2].data()[u[2].size()])
+#pragma acc exit data delete(u[0][0:block.size])
+#pragma acc exit data delete(u[1][0:block.size])
+#pragma acc exit data delete(u[2][0:block.size])
 #pragma acc exit data delete(blocksToReceive.data()[blocksToReceive.size()])
 #pragma acc exit data delete(offset_vector.data()[offset_vector.size()])
+
+        return layerError;
     }
 
 };
