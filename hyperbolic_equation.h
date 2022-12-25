@@ -510,12 +510,12 @@ public:
         }
         dataToReceive.resize(data_size);
 #pragma acc enter data copyin(this)
-#pragma acc enter data create(dataToReceive.data()[dataToReceive.size()])
+//#pragma acc enter data create(dataToReceive.data()[dataToReceive.size()])
 #pragma acc enter data create(u[0][0:block.size])
 #pragma acc enter data create(u[1][0:block.size])
 #pragma acc enter data create(u[2][0:block.size])
-#pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
-#pragma acc enter data create(offset_vector.data()[offset_vector.size()])
+//#pragma acc enter data create(blocksToReceive.data()[blocksToReceive.size()])
+//#pragma acc enter data create(offset_vector.data()[offset_vector.size()])
 
 #pragma acc enter data create(u0[0:block.size])
 
@@ -534,12 +534,12 @@ public:
 
         for (int i = 0; i < 3; i++)
             delete [] u[i];
-#pragma acc exit data delete(dataToReceive.data()[data_size])
+//#pragma acc exit data delete(dataToReceive.data()[data_size])
 #pragma acc exit data delete(u[0][0:block.size])
 #pragma acc exit data delete(u[1][0:block.size])
 #pragma acc exit data delete(u[2][0:block.size])
-#pragma acc exit data delete(blocksToReceive.data()[blocksToReceive.size()])
-#pragma acc exit data delete(offset_vector.data()[offset_vector.size()])
+//#pragma acc exit data delete(blocksToReceive.data()[blocksToReceive.size()])
+//#pragma acc exit data delete(offset_vector.data()[offset_vector.size()])
 
         return layerError;
     }
