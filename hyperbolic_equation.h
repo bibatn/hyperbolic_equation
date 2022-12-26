@@ -438,6 +438,8 @@ public:
         u.resize(3);
         for (int i = 0; i < 3; i++)
             u[i].resize(block.size);
+        u0 = new double[block.size];
+#pragma acc enter data create(u0[0:block.size])
 //        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
