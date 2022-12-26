@@ -208,10 +208,10 @@ public:
         MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
     }
-    ~SolverMPI()
-    {
-        delete [] u;
-    }
+//    ~SolverMPI()
+//    {
+//        delete [] u;
+//    }
 
     std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
     {
