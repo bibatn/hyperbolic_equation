@@ -4,11 +4,6 @@
 #include <cmath>
 #include <mpi.h>
 #include <fstream>
-#ifdef __CUDACC__
-#define CUDA_HOSTDEV __host__ __device__
-#else
-#define CUDA_HOSTDEV
-#endif
 
 double Functions::AnalyticalSolution(double x, double y, double z, double t) const
 {
