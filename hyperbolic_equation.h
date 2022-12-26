@@ -71,9 +71,9 @@ struct Grid
     int K;
 };
 
-//__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
-//    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
-//}
+__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
+    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
+}
 
 //#pragma acc routine seq
 //double analyticalSolution( double, double, double, double, double, Grid);
@@ -87,15 +87,7 @@ struct Grid
 //    // get the linear index inside the array of the given grid block
 //    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
 //}
-// Function implementation
-extern "C" __device__ void
-f1dev( float* a, float* b, int i ){
-    a[i] = 2.0 * b[i];
-}
 
-// Function declaration
-#pragma acc routine seq
-extern "C" void f1dev( float*, float*, int )
 enum Axis
 {
     X, Y, Z
