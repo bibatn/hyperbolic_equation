@@ -94,7 +94,7 @@ f1dev( float* a, float* b, int i ){
 
 // Function declaration
 #pragma acc routine seq
-extern "C" void f1dev( float*, float* int );
+extern "C" void f1dev( float*, float*, int );
 enum Axis
 {
     X, Y, Z
