@@ -74,16 +74,18 @@ __device__ double analyticalSolution(double x, double y, double z, double t, dou
     return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
 }
 
+#pragma acc routine seq
+double analyticalSolution( double, double, double, double, double, Grid);
 
-__device__ double phi(double x, double y, double z, double a, const Grid g) {
-    return analyticalSolution(x, y, z, 0, a, g);
-}
-
-
-__host__ __device__ inline int ind(int i, int j, int k, const Block b) {
-    // get the linear index inside the array of the given grid block
-    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
-}
+//__device__ double phi(double x, double y, double z, double a, const Grid g) {
+//    return analyticalSolution(x, y, z, 0, a, g);
+//}
+//
+//
+//__host__ __device__ inline int ind(int i, int j, int k, const Block b) {
+//    // get the linear index inside the array of the given grid block
+//    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
+//}
 
 enum Axis
 {
