@@ -177,6 +177,7 @@ class SolverMPI
     Grid g;
     Index ind; // for getting flattened indexes in the 3-d array
     std::vector< std::vector<double> > u;
+    double * u0;//add destructor
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
     int proc_rank, proc_size;
@@ -188,6 +189,7 @@ public:
         proc_rank = 0; proc_size = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
+#pragma acc enter data copyin(this)
     }
 
     std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
