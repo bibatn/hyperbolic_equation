@@ -91,11 +91,11 @@ struct Grid
 extern "C" __device__ void
 f1dev( float* a, float* b, int i ){
     a[i] = 2.0 * b[i];
-};
+}
 
 // Function declaration
 #pragma acc routine seq
-extern "C" void f1dev( float*, float*, int );
+extern "C" void f1dev( float*, float*, int )
 enum Axis
 {
     X, Y, Z
