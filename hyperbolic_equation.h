@@ -87,7 +87,7 @@ struct Grid
 //    // get the linear index inside the array of the given grid block
 //    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
 //}
- Function implementation
+// Function implementation
 extern "C" __device__ void
 f1dev( float* a, float* b, int i ){
     a[i] = 2.0 * b[i];
