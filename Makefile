@@ -24,7 +24,7 @@ run:
 	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
 
 run_polus:
-	bsub -n 1 -gpu "num=2" -o o.txt -e err.txt mpiexec ./hyperbolic_equation 128 1 out.txt
+	bsub -n 1 -gpu "num=1" -o o.txt -e err.txt mpiexec ./hyperbolic_equation 128 1 out.txt
 
 submit-polus-parallel:
 	for N in 512 ; do \
