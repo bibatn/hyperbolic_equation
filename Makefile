@@ -6,6 +6,11 @@ TARGET = hyperbolic_equation
 
 all: $(TARGET)
 
+load:
+	module load openmpi/2.1.2/2018
+	module load pgi
+	module load SpectrumMPI/10.1.0
+
 build: hyperbolic_equation.h
 	mpic++ -O3 -std=c++11 -fopenmp hyperbolic_equation.cpp -o hyperbolic_equation
 
