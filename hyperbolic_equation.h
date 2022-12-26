@@ -3,7 +3,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <stdexcept>
-#include "openacc.h"
+//#include "openacc.h"
 
 struct Block
 {
