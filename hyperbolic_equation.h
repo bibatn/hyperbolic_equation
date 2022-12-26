@@ -475,8 +475,12 @@ public:
         {
             GetNextU(step, block);
         }
+        layerError = ComputeLayerError(steps % 3, steps * g.tau, block);
 
-        return ComputeLayerError(steps % 3, steps * g.tau, block);
+#pragma acc exit data delete(u0)
+#pragma acc exit data delete(this)
+
+        return layerError;
     }
 
 };
