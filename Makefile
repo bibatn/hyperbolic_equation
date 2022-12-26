@@ -11,6 +11,12 @@ build: hyperbolic_equation.h
 run:
 	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
 
+runp:
+	bsub -n 1 -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./hyperbolic_equation 128 1 out.txt ;
+
+runp2:
+	bsub -n 2 -W 00:10 -o /dev/null -e /dev/null OMP_NUM_THREADS=1 mpiexec ./hyperbolic_equation 128 1 out.txt ;
+
 submit-polus-parallel:
 	for N in 512 ; do \
 		for p in 1 4 16; do \
