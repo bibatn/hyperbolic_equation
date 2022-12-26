@@ -42,7 +42,6 @@ struct Block
     int x_size, y_size, z_size;
     int size;
 };
-
 struct Grid
 {
     Grid(double L_x, double L_y, double L_z, int N, double T, int K)
@@ -70,6 +69,21 @@ struct Grid
     double tau;
     int K;
 };
+
+__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
+    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
+}
+
+
+__device__ double phi(double x, double y, double z, double a, const Grid g) {
+    return analyticalSolution(x, y, z, 0, a, g);
+}
+
+
+__host__ __device__ inline int ind(int i, int j, int k, const Block b) {
+    // get the linear index inside the array of the given grid block
+    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
+}
 
 enum Axis
 {
@@ -321,6 +335,13 @@ public:
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
         // initial values for inner points in u_0
+
+#pragma omp parallel for collapse(3)
+        for (int i = x1; i <= x2; i++)
+            for (int j = y1; j <= y2; j++)
+                for (int k = z1; k <= z2; k++)
+                    u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+
 #pragma omp parallel for collapse(3)
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
