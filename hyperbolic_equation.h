@@ -476,7 +476,7 @@ public:
             GetNextU(step, block);
         }
         double layerError = ComputeLayerError(steps % 3, steps * g.tau, block);
-
+#pragma acc wait
 #pragma acc exit data delete(u0)
 #pragma acc exit data delete(this)
 
