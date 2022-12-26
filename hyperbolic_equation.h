@@ -340,8 +340,8 @@ public:
     void InitValues(const Block b)
     {
         // boundary (i = 0,N or j = 0,N or k = 0,N)
-        FillBoundaryValues(0, 0, b);
-        FillBoundaryValues(1, g.tau, b);
+//        FillBoundaryValues(0, 0, b);
+//        FillBoundaryValues(1, g.tau, b);
 
         // compute the boundaries of the current block
         int x1 = std::max(b.x_min, 1); int x2 = std::min(b.x_max, g.N - 1);
