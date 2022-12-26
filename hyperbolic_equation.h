@@ -3,6 +3,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <stdexcept>
+#include "openacc.h"
 
 struct Block
 {
@@ -87,14 +88,14 @@ struct Grid
 //    return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
 //}
 // Function implementation
-extern "C" __device__ void
-f1dev( float* a, float* b, int i ){
-    a[i] = 2.0 * b[i];
-}
-
-// Function declaration
-#pragma acc routine seq
-extern "C" void f1dev( float*, float*, int );
+//extern "C" __device__ void
+//f1dev( float* a, float* b, int i ){
+//    a[i] = 2.0 * b[i];
+//}
+//
+//// Function declaration
+//#pragma acc routine seq
+//extern "C" void f1dev( float*, float*, int );
 enum Axis
 {
     X, Y, Z
