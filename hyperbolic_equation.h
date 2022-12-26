@@ -4,7 +4,11 @@
 #include <mpi.h>
 #include <stdexcept>
 //#include "openacc.h"
-
+#ifdef __CUDACC__
+#define CUDA_HOSTDEV __host__ __device__
+#else
+#define CUDA_HOSTDEV
+#endif
 struct Block
 {
     Block(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) :
