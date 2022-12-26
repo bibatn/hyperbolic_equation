@@ -70,7 +70,8 @@ struct Grid
     int K;
 };
 
-__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
+#pragma acc routine
+double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
     return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
 }
 
