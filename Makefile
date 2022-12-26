@@ -18,7 +18,7 @@ build_: hyperbolic_equation.h
 	mpic++ -O3 -std=c++11 $(OPT) hyperbolic_equation.cpp -o hyperbolic_equation
 
 buildp: hyperbolic_equation.h
-	pgc++ -O3 -std=c++11 $(OPT) -I/opt/ibm/spectrum_mpi/include -L/opt/ibm/spectrum_mpi/lib -lmpiprofilesupport -lmpi_ibm hyperbolic_equation.cu -o hyperbolic_equation
+	pgc++ -O3 -std=c++11 $(OPT) -I/opt/ibm/spectrum_mpi/include -L/opt/ibm/spectrum_mpi/lib -lmpiprofilesupport -lmpi_ibm hyperbolic_equation.cpp -o hyperbolic_equation
 
 run:
 	mpirun -np 4 ./hyperbolic_equation 128 1 out.txt
