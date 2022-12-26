@@ -337,11 +337,12 @@ public:
 
         // initial values for inner points in u_0
 
-#pragma omp parallel for collapse(3)
+#pragma acc update device(u0[0:b.size])
+#pragma acc kernels loop independent
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+                    u0[ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 
 #pragma omp parallel for collapse(3)
         for (int i = x1; i <= x2; i++)
