@@ -70,12 +70,12 @@ struct Grid
     int K;
 };
 
-__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
-    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
-}
+//__device__ double analyticalSolution(double x, double y, double z, double t, double a, const Grid g) {
+//    return sin(M_PI * x / g.L_x) * sin(M_PI * y / g.L_y) * sin(2 * M_PI * z / g.L_z) * cos(a * t);
+//}
 
-#pragma acc routine seq
-double analyticalSolution( double, double, double, double, double, Grid);
+//#pragma acc routine seq
+//double analyticalSolution( double, double, double, double, double, Grid);
 
 //__device__ double phi(double x, double y, double z, double a, const Grid g) {
 //    return analyticalSolution(x, y, z, 0, a, g);
