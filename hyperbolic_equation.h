@@ -191,12 +191,13 @@ class SolverMPI
     Functions f;
     Grid g;
     Index ind; // for getting flattened indexes in the 3-d array
-    std::vector< std::vector<double> > u;
     double * u0;//add destructor
     double * u1;
     double * u2;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
+    std::vector<int> offset_vector;
+    std::vector<double> dataToReceive;
     int proc_rank, proc_size;
 
 public:
@@ -209,7 +210,7 @@ public:
 #pragma acc enter data copyin(this)
     }
 
-    std::vector<double> GetSendData(int uInd, const Block block, const Block otherBlock) const
+    std::vector<double> GetSendData0(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
 
@@ -217,19 +218,50 @@ public:
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
-                    dataToSend[ind(i, j, k, otherBlock)] = u[uInd][ind(i, j, k, block)];
+                    dataToSend[ind(i, j, k, otherBlock)] = u0[ind(i, j, k, block)];
 
         return dataToSend;
     }
 
-    std::vector< std::vector<double> > Exchange(int uInd, const Block block) const
+    std::vector<double> GetSendData1(const Block block, const Block otherBlock) const
+    {
+        std::vector<double> dataToSend(otherBlock.size);
+
+#pragma omp parallel for collapse(3)
+        for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
+            for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
+                for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
+                    dataToSend[ind(i, j, k, otherBlock)] = u1[ind(i, j, k, block)];
+
+        return dataToSend;
+    }
+
+    void Exchange(int uInd, const Block block)
+    {
+//        std::vector<double> dataToReceive(blocksToReceive.size());
+//        std::cout << "I'm here! " << std::endl;
+        for (int i = 0; i < blocksToReceive.size(); i++) {
+            std::vector<double> dataToSend;
+            if (uInd == 0)
+                dataToSend = GetSendData0(block, blocksToSend[i].second);
+            else if (uInd == 1)
+                dataToSend = GetSendData1(block, blocksToSend[i].second);
+            MPI_Sendrecv(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 777, &dataToReceive[offset_vector[i]], blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 777, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
+        }
+    }
+
+    std::vector< std::vector<double> > Exchange(int uind, const Block block) const
     {
         std::vector< std::vector<double> > dataToReceive(blocksToReceive.size());
         std::vector<MPI_Request> requests(2);
         std::vector<MPI_Status> statuses(2);
+        std::vector<double> dataToSend;
 
         for (int i = 0; i < blocksToReceive.size(); i++) {
-            std::vector<double> dataToSend = GetSendData(uInd, block, blocksToSend[i].second);
+            if(uind == 0)
+                dataToSend = GetSendData0( block, blocksToSend[i].second);
+            else if (uind == 1)
+                dataToSend = GetSendData1( block, blocksToSend[i].second);
             dataToReceive[i] = std::vector<double>(blocksToReceive[i].second.size);
             MPI_Isend(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 0, MPI_COMM_WORLD, &requests[0]);
             MPI_Irecv(dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 0, MPI_COMM_WORLD, &requests[1]);
@@ -238,10 +270,11 @@ public:
         return dataToReceive;
     }
 
-    double FindU(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const {
+
+    double FindU(int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
-            return u[uInd][ind(i, j, k, b)];
+            return u1[ind(i, j, k, b)];
         }
 
         for (int r_i = 0; r_i < blocksToReceive.size(); r_i++) {
@@ -252,20 +285,48 @@ public:
                 k < otherB.z_min or k > otherB.z_max)
                 continue;
 
-            return recieved[r_i][ind(i, j, k, otherB)];
+            return dataToReceive[offset_vector[r_i] + ind(i, j, k, otherB)];
         }
-        throw std::runtime_error("u value non found");
+        return 1;
     }
 
-    double LaplaceOperator(int uInd, int i, int j, int k, const Block b, const std::vector< std::vector<double> > &recieved) const
+    double FindU0(int i, int j, int k, const Block b) const {
+
+        if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
+            return u0[ind(i, j, k, b)];
+        }
+
+        for (int r_i = 0; r_i < blocksToReceive.size(); r_i++) {
+            Block otherB = blocksToReceive[r_i].second;
+
+            if (i < otherB.x_min or i > otherB.x_max or
+                j < otherB.y_min or j > otherB.y_max or
+                k < otherB.z_min or k > otherB.z_max)
+                continue;
+
+            return dataToReceive[offset_vector[r_i] + ind(i, j, k, otherB)];
+        }
+        return 1;
+    }
+
+
+    double LaplaceOperator(int i, int j, int k, const Block b) const
     {
-        double dx = (FindU(uInd, i, j - 1, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j + 1, k, b, recieved)) / (g.h_y * g.h_y);
-        double dy = (FindU(uInd, i - 1, j, k, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i + 1, j, k, b, recieved)) / (g.h_x * g.h_x);
-        double dz = (FindU(uInd,i, j, k - 1, b, recieved) - 2 * u[uInd][ind(i, j, k, b)] + FindU(uInd, i, j, k + 1, b, recieved)) / (g.h_z * g.h_z);
+        double dx = (FindU(i, j - 1, k, b) - 2 * u1[ind(i, j, k, b)] + FindU(i, j + 1, k, b)) / (g.h_y * g.h_y);
+        double dy = (FindU(i - 1, j, k, b) - 2 * u1[ind(i, j, k, b)] + FindU(i + 1, j, k, b)) / (g.h_x * g.h_x);
+        double dz = (FindU(i, j, k - 1, b) - 2 * u1[ind(i, j, k, b)] + FindU(i, j, k + 1, b)) / (g.h_z * g.h_z);
         return dx + dy + dz;
     }
 
-    double ComputeLayerError(int uInd, double t, const Block b) const
+    double LaplaceOperator0(int i, int j, int k, const Block b) const
+    {
+        double dx = (FindU0(i, j - 1, k, b) - 2 * u0[ind(i, j, k, b)] + FindU0(i, j + 1, k, b)) / (g.h_y * g.h_y);
+        double dy = (FindU0(i - 1, j, k, b) - 2 * u0[ind(i, j, k, b)] + FindU0(i + 1, j, k, b)) / (g.h_x * g.h_x);
+        double dz = (FindU0(i, j, k - 1, b) - 2 * u0[ind(i, j, k, b)] + FindU0(i, j, k + 1, b)) / (g.h_z * g.h_z);
+        return dx + dy + dz;
+    }
+
+    double ComputeLayerError(double t, const Block b) const
     {
         double errorLocal = 0;
         // maximum difference between values of u analytical and u computed
@@ -273,64 +334,156 @@ public:
         for (int i = b.x_min; i <= b.x_max; i++)
             for (int j = b.y_min; j <= b.y_max; j++)
                 for (int k = b.z_min; k <= b.z_max; k++)
-                    errorLocal = std::max(errorLocal, fabs(u[uInd][ind(i, j, k, b)] -
+                    errorLocal = std::max(errorLocal, fabs(u1[ind(i, j, k, b)] -
                                                            f.AnalyticalSolution(i * g.h_x, j * g.h_y, k * g.h_z, t)));
         double error = 0;
         MPI_Reduce(&errorLocal, &error, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         return error;
     }
 
-    void FillBoundaryValues(int uInd, double t, const Block b)
+    void FillBoundaryValues0(double t, const Block b)
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
 #pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
-                    u[uInd][ind(b.x_min, i, j, b)] = 0;
+                    u0[ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
 #pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
-                    u[uInd][ind(b.x_max, i, j, b)] = 0;
+                    u0[ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
 #pragma omp parallel for collapse(2)
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
-                    u[uInd][ind(i, b.y_min, j, b)] = 0;
+                    u0[ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
 #pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
-                    u[uInd][ind(i, b.y_max, j, b)] = 0;
+                    u0[ind(i, b.y_max, j, b)] = 0;
         }
 
         if (b.z_min == 0) {
 #pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
-                    u[uInd][ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
+                    u0[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
 #pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
-                    u[uInd][ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
+                    u0[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
+        }
+    }
+
+    void FillBoundaryValues1(double t, const Block b)
+    {
+        // Variant 3 -> first kind for x, periodic for y, first kind for z
+        if (b.x_min == 0) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.y_min; i <= b.y_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u1[ind(b.x_min, i, j, b)] = 0;
+        }
+
+        if (b.x_max == g.N) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.y_min; i <= b.y_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u1[ind(b.x_max, i, j, b)] = 0;
+        }
+
+        if (b.y_min == 0) {
+#pragma omp parallel for collapse(2)
+            for(int i = b.x_min; i<=b.x_max; i++)
+                for(int j = b.z_min; j<=b.z_max; j++)
+                    u1[ind(i, b.y_min, j, b)] = 0;
+        }
+
+        if(b.y_max == g.N){
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u1[ind(i, b.y_max, j, b)] = 0;
+        }
+
+        if (b.z_min == 0) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.y_min; j <= b.y_max; j++)
+                    u1[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
+        }
+
+        if (b.z_max == g.N) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.y_min; j <= b.y_max; j++)
+                    u1[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
+        }
+    }
+
+    void FillBoundaryValues2(double t, const Block b)
+    {
+        // Variant 3 -> first kind for x, periodic for y, first kind for z
+        if (b.x_min == 0) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.y_min; i <= b.y_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u2[ind(b.x_min, i, j, b)] = 0;
+        }
+
+        if (b.x_max == g.N) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.y_min; i <= b.y_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u2[ind(b.x_max, i, j, b)] = 0;
+        }
+
+        if (b.y_min == 0) {
+#pragma omp parallel for collapse(2)
+            for(int i = b.x_min; i<=b.x_max; i++)
+                for(int j = b.z_min; j<=b.z_max; j++)
+                    u2[ind(i, b.y_min, j, b)] = 0;
+        }
+
+        if(b.y_max == g.N){
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.z_min; j <= b.z_max; j++)
+                    u2[ind(i, b.y_max, j, b)] = 0;
+        }
+
+        if (b.z_min == 0) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.y_min; j <= b.y_max; j++)
+                    u2[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
+        }
+
+        if (b.z_max == g.N) {
+#pragma omp parallel for collapse(2)
+            for (int i = b.x_min; i <= b.x_max; i++)
+                for (int j = b.y_min; j <= b.y_max; j++)
+                    u2[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
         }
     }
 
     void InitValues(const Block b)
     {
         // boundary (i = 0,N or j = 0,N or k = 0,N)
-        FillBoundaryValues(0, 0, b);
-        FillBoundaryValues(1, g.tau, b);
+        FillBoundaryValues0(0, b);
+        FillBoundaryValues1(g.tau, b);
 
         // compute the boundaries of the current block
         int x1 = std::max(b.x_min, 1); int x2 = std::min(b.x_max, g.N - 1);
@@ -346,19 +499,14 @@ public:
                 for (int k = z1; k <= z2; k++)
                     u0[index(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 
-#pragma omp parallel for collapse(3)
-        for (int i = x1; i <= x2; i++)
-            for (int j = y1; j <= y2; j++)
-                for (int k = z1; k <= z2; k++)
-                    u[0][ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 
-        std::vector< std::vector<double> > recieved = Exchange(0, b);
+        Exchange(0, b);
         // initial values for inner points in u_1
 #pragma omp parallel for collapse(3)
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[1][ind(i, j, k, b)] = u[0][ind(i, j, k, b)] + g.tau * g.tau / 2 * LaplaceOperator(0, i, j, k, b, recieved);
+                    u1[ind(i, j, k, b)] = u0[ind(i, j, k, b)] + g.tau * g.tau / 2 * LaplaceOperator0(i, j, k, b);
     }
 
     void GetNextU(int step, const Block b)
@@ -368,16 +516,16 @@ public:
         int y1 = std::max(b.y_min, 1); int y2 = std::min(b.y_max, g.N - 1);
         int z1 = std::max(b.z_min, 1); int z2 = std::min(b.z_max, g.N - 1);
 
-        std::vector< std::vector<double> > received = Exchange((step + 2) % 3, b);
+        Exchange(1, b);
         // calculate u_n+1 inside the area
 #pragma omp parallel for collapse(3)
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u[step % 3][ind(i, j, k, b)] = 2 * u[(step + 2) % 3][ind(i, j, k, b)] -
-                                                   u[(step + 1) % 3][ind(i, j, k, b)] +
-                                                   g.tau * g.tau * LaplaceOperator((step + 2) % 3, i, j, k, b, received);
-        FillBoundaryValues(step % 3, step * g.tau, b);
+                    u2[ind(i, j, k, b)] = 2 * u1[ind(i, j, k, b)] -
+                                                   u0[ind(i, j, k, b)] +
+                                                   g.tau * g.tau * LaplaceOperator( i, j, k, b);
+        FillBoundaryValues2(step * g.tau, b);
     }
 
     bool IsInside(int xmin1, int xmax1, int ymin1, int ymax1, int xmin2, int xmax2, int ymin2, int ymax2) const
@@ -460,9 +608,6 @@ public:
 //        block.expand_Block();
 
         // allocate space for u
-        u.resize(3);
-        for (int i = 0; i < 3; i++)
-            u[i].resize(block.size);
         u0 = new double[block.size];
         u1 = new double[block.size];
         u2 = new double[block.size];
@@ -471,6 +616,15 @@ public:
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
 
+        offset_vector.resize(blocksToReceive.size());
+        offset_vector[0] = 0;
+        int data_size = blocksToReceive[0].second.size;
+        for (int i = 1; i < blocksToReceive.size(); i++)
+        {
+            offset_vector[i] = offset_vector[i-1] + blocksToReceive[i-1].second.size;
+            data_size = data_size + blocksToReceive[i].second.size;
+        }
+        dataToReceive.resize(data_size);
         // init u_0 and u_1
         InitValues(block);
 
@@ -478,11 +632,10 @@ public:
         for (int step = 2; step <= steps; step++)
         {
             GetNextU(step, block);
-            std::swap(u0,u1);
-            std::swap(u1, u2);
-            std::swap(u2, u0);
+            std::swap(u0,u2);
+            std::swap(u0, u1);
         }
-        double layerError = ComputeLayerError(steps % 3, steps * g.tau, block);
+        double layerError = ComputeLayerError(steps * g.tau, block);
 #pragma acc wait
 #pragma acc exit data delete(u0)
 #pragma acc exit data delete(this)
