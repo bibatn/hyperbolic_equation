@@ -3,7 +3,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <stdexcept>
-//#include "openacc.h"
+#include "openacc.h"
 struct Block
 {
     Block(int x_min, int x_max, int y_min, int y_max, int z_min, int z_max) :
@@ -81,7 +81,7 @@ double phi(double x, double y, double z, double a, const Grid g) {
 }
 
 #pragma acc routine
-inline int ind(int i, int j, int k, const Block b) {
+inline int index(int i, int j, int k, const Block b) {
     // get the linear index inside the array of the given grid block
     return (i - b.x_min) * b.y_size * b.z_size + (j - b.y_min) * b.z_size + (k - b.z_min);
 }
@@ -342,7 +342,7 @@ public:
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u0[ind(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
+                    u0[index(i, j, k, b)] = f.Phi(i * g.h_x, j * g.h_y, k * g.h_z);
 
 #pragma omp parallel for collapse(3)
         for (int i = x1; i <= x2; i++)
