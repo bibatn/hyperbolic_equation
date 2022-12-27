@@ -248,7 +248,7 @@ public:
         }
     }
 
-    
+
     double FindU(int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
@@ -476,6 +476,8 @@ public:
 
         Exchange(1, b);
         // calculate u_n+1 inside the area
+#pragma acc update device(u0[0:b.size])
+#pragma acc update device(u1[0:b.size])
 #pragma acc kernels loop independent
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
@@ -483,6 +485,8 @@ public:
                     u2[index(i, j, k, b)] = 2 * u1[index(i, j, k, b)] -
                                                    u0[index(i, j, k, b)] +
                                                    g.tau * g.tau * LaplaceOperator( i, j, k, b);
+#pragma acc update host(u0[0:b.size])
+#pragma acc update host(u1[0:b.size])
         FillBoundaryValues2(step * g.tau, b);
     }
 
