@@ -221,7 +221,7 @@ public:
 
         return dataToSend;
     }
-    
+
     std::vector<double> GetSendData1(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
@@ -234,7 +234,6 @@ public:
         return dataToSend;
     }
 
-#pragma acc routine
     void Exchange(int uInd, const Block block)
     {
     //        std::vector<double> dataToReceive(blocksToReceive.size());
@@ -249,8 +248,7 @@ public:
         }
     }
 
-
-#pragma acc routine
+    
     double FindU(int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
