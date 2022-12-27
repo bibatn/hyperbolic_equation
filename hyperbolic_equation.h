@@ -210,7 +210,6 @@ public:
 #pragma acc enter data copyin(this)
     }
 
-#pragma acc routine
     std::vector<double> GetSendData0(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
@@ -222,8 +221,7 @@ public:
 
         return dataToSend;
     }
-
-#pragma acc routine
+    
     std::vector<double> GetSendData1(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
