@@ -196,8 +196,8 @@ class SolverMPI
     double * u2;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
-    std::vector<int> offset_vector;
-    std::vector<double> dataToReceive;
+    int * offset_vector;
+    double * dataToReceive;
     int proc_rank, proc_size;
 
 public:
@@ -616,7 +616,7 @@ public:
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
 
-        offset_vector.resize(blocksToReceive.size());
+        offset_vector = new int [blocksToReceive.size()];
         offset_vector[0] = 0;
         int data_size = blocksToReceive[0].second.size;
         for (int i = 1; i < blocksToReceive.size(); i++)
@@ -624,7 +624,7 @@ public:
             offset_vector[i] = offset_vector[i-1] + blocksToReceive[i-1].second.size;
             data_size = data_size + blocksToReceive[i].second.size;
         }
-        dataToReceive.resize(data_size);
+        dataToReceive = new double [data_size];
         // init u_0 and u_1
         InitValues(block);
 
