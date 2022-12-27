@@ -250,25 +250,6 @@ public:
         }
     }
 
-    std::vector< std::vector<double> > Exchange(int uind, const Block block) const
-    {
-        std::vector< std::vector<double> > dataToReceive(blocksToReceive.size());
-        std::vector<MPI_Request> requests(2);
-        std::vector<MPI_Status> statuses(2);
-        std::vector<double> dataToSend;
-
-        for (int i = 0; i < blocksToReceive.size(); i++) {
-            if(uind == 0)
-                dataToSend = GetSendData0( block, blocksToSend[i].second);
-            else if (uind == 1)
-                dataToSend = GetSendData1( block, blocksToSend[i].second);
-            dataToReceive[i] = std::vector<double>(blocksToReceive[i].second.size);
-            MPI_Isend(dataToSend.data(), blocksToSend[i].second.size, MPI_DOUBLE, blocksToSend[i].first, 0, MPI_COMM_WORLD, &requests[0]);
-            MPI_Irecv(dataToReceive[i].data(), blocksToReceive[i].second.size, MPI_DOUBLE, blocksToReceive[i].first, 0, MPI_COMM_WORLD, &requests[1]);
-            MPI_Waitall(2, requests.data(), statuses.data());
-        }
-        return dataToReceive;
-    }
 
 
     double FindU(int i, int j, int k, const Block b) const {
@@ -502,7 +483,7 @@ public:
 
         Exchange(0, b);
         // initial values for inner points in u_1
-#pragma omp parallel for collapse(3)
+#pragma acc kernels loop independent
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -518,7 +499,7 @@ public:
 
         Exchange(1, b);
         // calculate u_n+1 inside the area
-#pragma omp parallel for collapse(3)
+#pragma acc kernels loop independent
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
@@ -612,6 +593,8 @@ public:
         u1 = new double[block.size];
         u2 = new double[block.size];
 #pragma acc enter data create(u0[0:block.size])
+#pragma acc enter data create(u1[0:block.size])
+#pragma acc enter data create(u2[0:block.size])
 //        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
         GetNeighbours(blocks);
@@ -638,6 +621,8 @@ public:
         double layerError = ComputeLayerError(steps * g.tau, block);
 #pragma acc wait
 #pragma acc exit data delete(u0)
+#pragma acc exit data delete(u1)
+#pragma acc exit data delete(u2)
 #pragma acc exit data delete(this)
 
         return layerError;
