@@ -213,8 +213,7 @@ public:
     std::vector<double> GetSendData0(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
-
-#pragma omp parallel for collapse(3)
+        
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
@@ -227,7 +226,6 @@ public:
     {
         std::vector<double> dataToSend(otherBlock.size);
 
-#pragma omp parallel for collapse(3)
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
@@ -236,10 +234,11 @@ public:
         return dataToSend;
     }
 
+#pragma acc routine
     void Exchange(int uInd, const Block block)
     {
-//        std::vector<double> dataToReceive(blocksToReceive.size());
-//        std::cout << "I'm here! " << std::endl;
+    //        std::vector<double> dataToReceive(blocksToReceive.size());
+    //        std::cout << "I'm here! " << std::endl;
         for (int i = 0; i < blocksToReceive.size(); i++) {
             std::vector<double> dataToSend;
             if (uInd == 0)
@@ -251,7 +250,7 @@ public:
     }
 
 
-
+#pragma acc routine
     double FindU(int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
@@ -270,7 +269,7 @@ public:
         }
         return 1;
     }
-
+#pragma acc routine
     double FindU0(int i, int j, int k, const Block b) const {
 
         if (b.x_min <= i and i <= b.x_max and b.y_min <= j and j <= b.y_max and b.z_min <= k and k <= b.z_max) {
@@ -290,7 +289,7 @@ public:
         return 1;
     }
 
-
+#pragma acc routine
     double LaplaceOperator(int i, int j, int k, const Block b) const
     {
         double dx = (FindU(i, j - 1, k, b) - 2 * u1[ind(i, j, k, b)] + FindU(i, j + 1, k, b)) / (g.h_y * g.h_y);
@@ -299,6 +298,7 @@ public:
         return dx + dy + dz;
     }
 
+#pragma acc routine
     double LaplaceOperator0(int i, int j, int k, const Block b) const
     {
         double dx = (FindU0(i, j - 1, k, b) - 2 * u0[ind(i, j, k, b)] + FindU0(i, j + 1, k, b)) / (g.h_y * g.h_y);
@@ -311,7 +311,6 @@ public:
     {
         double errorLocal = 0;
         // maximum difference between values of u analytical and u computed
-#pragma omp parallel for collapse(3) reduction(max: errorLocal)
         for (int i = b.x_min; i <= b.x_max; i++)
             for (int j = b.y_min; j <= b.y_max; j++)
                 for (int k = b.z_min; k <= b.z_max; k++)
@@ -326,42 +325,36 @@ public:
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u0[ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u0[ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
-#pragma omp parallel for collapse(2)
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
                     u0[ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u0[ind(i, b.y_max, j, b)] = 0;
         }
 
         if (b.z_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u0[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u0[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -372,42 +365,36 @@ public:
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u1[ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u1[ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
-#pragma omp parallel for collapse(2)
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
                     u1[ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u1[ind(i, b.y_max, j, b)] = 0;
         }
 
         if (b.z_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u1[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u1[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -418,42 +405,36 @@ public:
     {
         // Variant 3 -> first kind for x, periodic for y, first kind for z
         if (b.x_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u2[ind(b.x_min, i, j, b)] = 0;
         }
 
         if (b.x_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.y_min; i <= b.y_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u2[ind(b.x_max, i, j, b)] = 0;
         }
 
         if (b.y_min == 0) {
-#pragma omp parallel for collapse(2)
             for(int i = b.x_min; i<=b.x_max; i++)
                 for(int j = b.z_min; j<=b.z_max; j++)
                     u2[ind(i, b.y_min, j, b)] = 0;
         }
 
         if(b.y_max == g.N){
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.z_min; j <= b.z_max; j++)
                     u2[ind(i, b.y_max, j, b)] = 0;
         }
 
         if (b.z_min == 0) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u2[ind(i, j, b.z_min, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, 0, t);
         }
 
         if (b.z_max == g.N) {
-#pragma omp parallel for collapse(2)
             for (int i = b.x_min; i <= b.x_max; i++)
                 for (int j = b.y_min; j <= b.y_max; j++)
                     u2[ind(i, j, b.z_max, b)] = f.AnalyticalSolution(i * g.h_x, j * g.h_y, g.L_z, t);
@@ -503,8 +484,8 @@ public:
         for (int i = x1; i <= x2; i++)
             for (int j = y1; j <= y2; j++)
                 for (int k = z1; k <= z2; k++)
-                    u2[ind(i, j, k, b)] = 2 * u1[ind(i, j, k, b)] -
-                                                   u0[ind(i, j, k, b)] +
+                    u2[index(i, j, k, b)] = 2 * u1[index(i, j, k, b)] -
+                                                   u0[index(i, j, k, b)] +
                                                    g.tau * g.tau * LaplaceOperator( i, j, k, b);
         FillBoundaryValues2(step * g.tau, b);
     }
@@ -608,6 +589,8 @@ public:
             data_size = data_size + blocksToReceive[i].second.size;
         }
         dataToReceive = new double [data_size];
+#pragma acc enter data create(offset_vector[0:blocksToReceive.size()])
+#pragma acc enter data create(dataToReceive[0:data_size])
         // init u_0 and u_1
         InitValues(block);
 
@@ -623,6 +606,8 @@ public:
 #pragma acc exit data delete(u0)
 #pragma acc exit data delete(u1)
 #pragma acc exit data delete(u2)
+#pragma acc exit data delete(offset_vector)
+#pragma acc exit data delete(dataToReceive)
 #pragma acc exit data delete(this)
 
         return layerError;
