@@ -209,7 +209,7 @@ public:
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
 #pragma acc enter data copyin(this)
     }
-    
+
 #pragma acc routine
     std::vector<double> GetSendData0(const Block block, const Block otherBlock) const
     {
@@ -291,7 +291,6 @@ public:
         return 1;
     }
 
-#pragma acc routine
     double LaplaceOperator(int i, int j, int k, const Block b) const
     {
         double dx = (FindU(i, j - 1, k, b) - 2 * u1[ind(i, j, k, b)] + FindU(i, j + 1, k, b)) / (g.h_y * g.h_y);
@@ -300,7 +299,6 @@ public:
         return dx + dy + dz;
     }
 
-#pragma acc routine
     double LaplaceOperator0(int i, int j, int k, const Block b) const
     {
         double dx = (FindU0(i, j - 1, k, b) - 2 * u0[ind(i, j, k, b)] + FindU0(i, j + 1, k, b)) / (g.h_y * g.h_y);
