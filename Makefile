@@ -26,6 +26,11 @@ run:
 run_polus:
 	bsub -n 1 -gpu "num=2" -o o.txt -e err.txt mpiexec ./hyperbolic_equation 128 1 out.txt
 
+runp4:
+	bsub -n 4 -gpu "num=2" -o o.txt -e err.txt mpiexec ./hyperbolic_equation 128 1 out.txt
+runp6:
+	bsub -n 6 -gpu "num=2" -o o.txt -e err.txt mpiexec ./hyperbolic_equation 128 1 out.txt
+
 submit-polus-parallel:
 	for N in 512 ; do \
 		for p in 1 4 16; do \

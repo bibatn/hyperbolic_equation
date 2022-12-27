@@ -610,6 +610,12 @@ public:
 #pragma acc exit data delete(dataToReceive)
 #pragma acc exit data delete(this)
 
+        delete [] u0;
+        delete [] u1;
+        delete [] u2;
+        delete [] offset_vector;
+        delete [] dataToReceive;
+
         return layerError;
     }
 
