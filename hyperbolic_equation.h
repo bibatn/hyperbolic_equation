@@ -193,6 +193,8 @@ class SolverMPI
     Index ind; // for getting flattened indexes in the 3-d array
     std::vector< std::vector<double> > u;
     double * u0;//add destructor
+    double * u1;
+    double * u2;
     std::vector< std::pair<int, Block> > blocksToSend;
     std::vector< std::pair<int, Block> > blocksToReceive;
     int proc_rank, proc_size;
@@ -462,6 +464,8 @@ public:
         for (int i = 0; i < 3; i++)
             u[i].resize(block.size);
         u0 = new double[block.size];
+        u1 = new double[block.size];
+        u2 = new double[block.size];
 #pragma acc enter data create(u0[0:block.size])
 //        block.narrow_Block();
         // fill blocksToSend and blocksToReceive vectors
@@ -474,6 +478,9 @@ public:
         for (int step = 2; step <= steps; step++)
         {
             GetNextU(step, block);
+            std::swap(u0,u1);
+            std::swap(u1, u2);
+            std::swap(u2, u0);
         }
         double layerError = ComputeLayerError(steps % 3, steps * g.tau, block);
 #pragma acc wait
