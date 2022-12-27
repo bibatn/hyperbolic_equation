@@ -209,11 +209,12 @@ public:
         MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
 #pragma acc enter data copyin(this)
     }
-
+    
+#pragma acc routine
     std::vector<double> GetSendData0(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
-        
+
         for (int i = otherBlock.x_min; i <= otherBlock.x_max; i++)
             for (int j = otherBlock.y_min; j <= otherBlock.y_max; j++)
                 for (int k = otherBlock.z_min; k <= otherBlock.z_max; k++)
@@ -222,6 +223,7 @@ public:
         return dataToSend;
     }
 
+#pragma acc routine
     std::vector<double> GetSendData1(const Block block, const Block otherBlock) const
     {
         std::vector<double> dataToSend(otherBlock.size);
